@@ -648,4 +648,13 @@ No tests exist yet. Recommended coverage:
 
 ## License
 
-[Add your license here]
+This project is **dual-licensed**. See [LICENSE](./LICENSE) for full terms.
+
+| User | License | Summary |
+|------|---------|---------|
+| **Educational users** | Educational Use License (unrestricted) | Free for all educational purposes without restriction. Covers accredited institutions, research organizations, non-profit educational orgs, and individuals (students, teachers, researchers) acting in an educational capacity. |
+| **Everyone else** | MIT License | Standard MIT — free to use, modify, and distribute (including commercially) with attribution. |
+
+**Which applies to me?**
+- If you're a student, teacher, researcher, school, university, library, museum, or non-profit educational organization: **Educational Use License**. Use it however you want for learning, teaching, or research.
+- If you're a company, independent developer, or using it commercially: **MIT License**. Include the copyright notice and you're good.
