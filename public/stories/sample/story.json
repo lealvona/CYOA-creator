@@ -1,0 +1,205 @@
+{
+  "meta": {
+    "title": "The Forgotten Lab",
+    "description": "You wake up in an abandoned research facility with no memory of how you got here. Every choice matters. Find your way out — or uncover what happened.",
+    "author": "Interactive PPD Team",
+    "version": "1.0.0",
+    "date": "2026-02-28",
+    "estimatedMinutes": 5,
+    "tags": ["mystery", "sci-fi", "thriller"]
+  },
+  "config": {
+    "videoBasePath": "/stories/sample/videos",
+    "preloadNext": true,
+    "defaultVolume": 0.8,
+    "choiceLeadTime": 0
+  },
+  "startNodeId": "intro",
+  "nodes": [
+    {
+      "id": "intro",
+      "title": "Awakening",
+      "type": "start",
+      "videoFile": "intro.webm",
+      "subtitle": "You open your eyes...",
+      "choices": [
+        {
+          "id": "intro_door",
+          "label": "Try the heavy steel door",
+          "targetNodeId": "hallway"
+        },
+        {
+          "id": "intro_computer",
+          "label": "Check the flickering computer terminal",
+          "targetNodeId": "terminal"
+        }
+      ]
+    },
+    {
+      "id": "hallway",
+      "title": "The Hallway",
+      "type": "video",
+      "videoFile": "hallway.webm",
+      "subtitle": "A long corridor stretches ahead, dimly lit by emergency lights.",
+      "choices": [
+        {
+          "id": "hallway_left",
+          "label": "Go left toward the storage room",
+          "targetNodeId": "storage"
+        },
+        {
+          "id": "hallway_right",
+          "label": "Go right toward the exit sign",
+          "targetNodeId": "exit_attempt"
+        },
+        {
+          "id": "hallway_back",
+          "label": "Go back to the lab room",
+          "targetNodeId": "terminal"
+        }
+      ]
+    },
+    {
+      "id": "terminal",
+      "title": "The Terminal",
+      "type": "video",
+      "videoFile": "terminal.webm",
+      "subtitle": "The screen displays fragmented research logs.",
+      "setsFlags": ["has_keycard_info"],
+      "choices": [
+        {
+          "id": "terminal_read",
+          "label": "Read the encrypted files",
+          "targetNodeId": "encrypted"
+        },
+        {
+          "id": "terminal_leave",
+          "label": "Leave and try the door",
+          "targetNodeId": "hallway"
+        }
+      ]
+    },
+    {
+      "id": "encrypted",
+      "title": "Encrypted Files",
+      "type": "video",
+      "videoFile": "encrypted.webm",
+      "subtitle": "The files reveal a disturbing experiment...",
+      "setsFlags": ["knows_truth"],
+      "choices": [
+        {
+          "id": "encrypted_escape",
+          "label": "You need to get out — now",
+          "targetNodeId": "hallway"
+        },
+        {
+          "id": "encrypted_deeper",
+          "label": "Search for more information",
+          "targetNodeId": "deep_files"
+        }
+      ]
+    },
+    {
+      "id": "deep_files",
+      "title": "The Full Truth",
+      "type": "video",
+      "videoFile": "deep_files.webm",
+      "subtitle": "You find a video log from the lead researcher...",
+      "choices": [
+        {
+          "id": "deep_files_escape",
+          "label": "Take the data and run",
+          "targetNodeId": "exit_attempt"
+        }
+      ]
+    },
+    {
+      "id": "storage",
+      "title": "Storage Room",
+      "type": "video",
+      "videoFile": "storage.webm",
+      "subtitle": "Shelves of equipment and supplies. Something useful might be here.",
+      "setsFlags": ["has_keycard"],
+      "choices": [
+        {
+          "id": "storage_keycard",
+          "label": "You found a keycard! Head to the exit.",
+          "targetNodeId": "exit_attempt"
+        },
+        {
+          "id": "storage_investigate",
+          "label": "Investigate the strange noise in the corner",
+          "targetNodeId": "creature"
+        }
+      ]
+    },
+    {
+      "id": "creature",
+      "title": "The Creature",
+      "type": "video",
+      "videoFile": "creature.webm",
+      "subtitle": "Something moves in the shadows...",
+      "choices": [
+        {
+          "id": "creature_run",
+          "label": "Run back to the hallway!",
+          "targetNodeId": "exit_attempt"
+        },
+        {
+          "id": "creature_hide",
+          "label": "Hide and stay quiet",
+          "targetNodeId": "ending_caught"
+        }
+      ]
+    },
+    {
+      "id": "exit_attempt",
+      "title": "The Exit",
+      "type": "video",
+      "videoFile": "exit_attempt.webm",
+      "subtitle": "The main exit door. It requires a keycard.",
+      "choices": [
+        {
+          "id": "exit_use_card",
+          "label": "Use the keycard",
+          "targetNodeId": "ending_escape",
+          "condition": "has_keycard"
+        },
+        {
+          "id": "exit_force",
+          "label": "Try to force the door open",
+          "targetNodeId": "ending_alarm"
+        },
+        {
+          "id": "exit_search",
+          "label": "Go back and search for a keycard",
+          "targetNodeId": "hallway"
+        }
+      ]
+    },
+    {
+      "id": "ending_escape",
+      "title": "Freedom",
+      "type": "ending",
+      "videoFile": "ending_escape.webm",
+      "subtitle": "You step into daylight. You're free — but the questions remain.",
+      "choices": []
+    },
+    {
+      "id": "ending_alarm",
+      "title": "Lockdown",
+      "type": "ending",
+      "videoFile": "ending_alarm.webm",
+      "subtitle": "Alarms blare. Security doors slam shut. You're trapped.",
+      "choices": []
+    },
+    {
+      "id": "ending_caught",
+      "title": "Consumed",
+      "type": "ending",
+      "videoFile": "ending_caught.webm",
+      "subtitle": "The darkness closes in. You should have run.",
+      "choices": []
+    }
+  ]
+}

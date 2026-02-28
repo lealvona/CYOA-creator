@@ -1,0 +1,153 @@
+/* ================================================================
+   StoryViewer — top-level layout and phase transitions
+   ================================================================ */
+
+.story-viewer {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #000;
+}
+
+/* ----- Loading state ----- */
+
+.story-viewer--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.story-viewer__loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.story-viewer__spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #4ecdc4;
+  border-radius: 50%;
+  animation: sv-spin 0.8s linear infinite;
+}
+
+@keyframes sv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ----- Error state ----- */
+
+.story-viewer--error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.story-viewer__error-box {
+  text-align: center;
+  max-width: 500px;
+  padding: 2rem;
+}
+
+.story-viewer__error-box h2 {
+  color: #ff6b6b;
+  margin-bottom: 0.5rem;
+}
+
+.story-viewer__error-box p {
+  color: rgba(255, 255, 255, 0.6);
+  font-family: monospace;
+  word-break: break-all;
+}
+
+.story-viewer__error-box button {
+  margin-top: 1rem;
+  padding: 0.6rem 2rem;
+  background: #4ecdc4;
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* ----- Active (playing/choosing) ----- */
+
+.story-viewer--active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Transition fade */
+.story-viewer--transitioning {
+  animation: sv-transition 0.3s ease;
+}
+
+@keyframes sv-transition {
+  0% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* ----- Node title badge ----- */
+
+.story-viewer__node-title {
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.3rem 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.story-viewer:hover .story-viewer__node-title {
+  opacity: 1;
+}
+
+/* ----- Back button ----- */
+
+.story-viewer__back-btn {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 15;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.3s ease, background 0.2s ease;
+}
+
+.story-viewer:hover .story-viewer__back-btn {
+  opacity: 1;
+}
+
+.story-viewer__back-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}

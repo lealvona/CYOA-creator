@@ -1,0 +1,156 @@
+/* ================================================================
+   ChoiceOverlay — styles for the choice selection UI
+   ================================================================ */
+
+.choice-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  animation: co-fadein 0.4s ease-out;
+}
+
+@keyframes co-fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Semi-transparent backdrop */
+.choice-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.4) 0%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+}
+
+/* Content container */
+.choice-overlay__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  max-width: 700px;
+  width: 90%;
+}
+
+/* Prompt text */
+.choice-overlay__prompt {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 300;
+  text-align: center;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  margin: 0;
+}
+
+/* Buttons container */
+.choice-overlay__buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+/* Individual choice button */
+.choice-overlay__btn {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  text-align: left;
+  backdrop-filter: blur(8px);
+  transition: all 0.25s ease;
+  animation: co-btn-slide 0.5s ease-out both;
+  transform-origin: center;
+}
+
+@keyframes co-btn-slide {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.choice-overlay__btn:hover:not(:disabled) {
+  background: rgba(78, 205, 196, 0.2);
+  border-color: #4ecdc4;
+  transform: scale(1.02);
+}
+
+.choice-overlay__btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Selected state */
+.choice-overlay__btn--selected {
+  background: rgba(78, 205, 196, 0.3) !important;
+  border-color: #4ecdc4 !important;
+  transform: scale(1.03) !important;
+  box-shadow: 0 0 20px rgba(78, 205, 196, 0.3);
+}
+
+/* Dimmed (not selected) state */
+.choice-overlay__btn--dimmed {
+  opacity: 0.3;
+  transform: scale(0.97);
+}
+
+/* Number badge */
+.choice-overlay__btn-index {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  font-size: 0.9rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* Label text */
+.choice-overlay__btn-label {
+  flex: 1;
+}
+
+/* ---- Responsive ---- */
+
+@media (max-width: 600px) {
+  .choice-overlay__prompt {
+    font-size: 1.2rem;
+  }
+
+  .choice-overlay__btn {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+
+  .choice-overlay__btn-index {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+}

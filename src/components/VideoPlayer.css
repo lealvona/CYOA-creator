@@ -1,0 +1,163 @@
+/* ================================================================
+   VideoPlayer — styles for the video playback component
+   ================================================================ */
+
+.video-player {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ----- Video element ----- */
+
+.video-player__video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ----- Loading overlay ----- */
+
+.video-player__loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 1.2rem;
+  z-index: 10;
+  gap: 1rem;
+}
+
+.video-player__spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: vp-spin 0.8s linear infinite;
+}
+
+@keyframes vp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ----- Error overlay ----- */
+
+.video-player__error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.85);
+  color: #ff6b6b;
+  font-size: 1.2rem;
+  z-index: 10;
+  gap: 0.75rem;
+}
+
+.video-player__error-path {
+  font-size: 0.8rem;
+  color: #888;
+  font-family: monospace;
+  word-break: break-all;
+  max-width: 80%;
+  text-align: center;
+}
+
+.video-player__error button {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1.5rem;
+  background: #ff6b6b;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.video-player__error button:hover {
+  background: #ff8787;
+}
+
+/* ----- Subtitle ----- */
+
+.video-player__subtitle {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 0.5rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  max-width: 80%;
+  text-align: center;
+  z-index: 5;
+}
+
+/* ----- Controls bar ----- */
+
+.video-player__controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+  z-index: 5;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.video-player:hover .video-player__controls {
+  opacity: 1;
+}
+
+.video-player__btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  line-height: 1;
+}
+
+.video-player__btn:hover {
+  color: #4ecdc4;
+}
+
+/* ----- Progress bar ----- */
+
+.video-player__progress-track {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.video-player__progress-fill {
+  height: 100%;
+  background: #4ecdc4;
+  border-radius: 2px;
+  transition: width 0.1s linear;
+}
