@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { StoryViewer } from "./components/StoryViewer";
 import { StoryLibrary } from "./components/StoryLibrary";
+import type { StoryCatalogItem } from "./types/library";
 
 /**
  * App — Root component.
@@ -11,16 +12,17 @@ import { StoryLibrary } from "./components/StoryLibrary";
  * The story JSON and video assets live in `public/stories/<story-name>/`.
  */
 function App() {
-  const [activeStoryUrl, setActiveStoryUrl] = useState<string | null>(null);
+  const [activeStory, setActiveStory] = useState<StoryCatalogItem | null>(null);
 
-  if (!activeStoryUrl) {
-    return <StoryLibrary onOpenStory={setActiveStoryUrl} />;
+  if (!activeStory) {
+    return <StoryLibrary onOpenStory={setActiveStory} />;
   }
 
   return (
     <StoryViewer
-      storyUrl={activeStoryUrl}
-      onExit={() => setActiveStoryUrl(null)}
+      storyUrl={activeStory.storyUrl}
+      storyCompleteness={activeStory.completeness}
+      onExit={() => setActiveStory(null)}
     />
   );
 }

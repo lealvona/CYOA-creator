@@ -7,6 +7,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -66,6 +68,7 @@ private fun CreatorApp(vm: MainViewModel) {
 
   var pendingAttachVideoFile by remember { mutableStateOf<String?>(null) }
   var captureVideoFile by remember { mutableStateOf<String?>(null) }
+  var pendingCaptureVideoFile by remember { mutableStateOf<String?>(null) }
   var importConflictStrategy by remember { mutableStateOf(ImportConflictStrategy.MERGE) }
 
   val pickMedia = rememberLauncherForActivityResult(
@@ -98,10 +101,14 @@ private fun CreatorApp(vm: MainViewModel) {
     contract = ActivityResultContracts.RequestMultiplePermissions()
   )
   {
+    val requestedVideoFile = pendingCaptureVideoFile
+    pendingCaptureVideoFile = null
     val denied = it.entries.filterNot { pair -> pair.value }.map { pair -> pair.key }
     if (denied.isNotEmpty()) {
       vm.setStatus("Missing permissions: ${denied.joinToString()}")
       captureVideoFile = null
+    } else if (requestedVideoFile != null) {
+      captureVideoFile = requestedVideoFile
     }
   }
 
@@ -144,10 +151,23 @@ private fun CreatorApp(vm: MainViewModel) {
         isBusy = ui.isBusy,
         onBack = vm::clearSelection,
         onRecord = { videoFile ->
-          requestPermissions.launch(
-            arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
-          )
-          captureVideoFile = videoFile
+          val hasCamera = ContextCompat.checkSelfPermission(
+            vm.getApplication(),
+            Manifest.permission.CAMERA
+          ) == PackageManager.PERMISSION_GRANTED
+          val hasAudio = ContextCompat.checkSelfPermission(
+            vm.getApplication(),
+            Manifest.permission.RECORD_AUDIO
+          ) == PackageManager.PERMISSION_GRANTED
+
+          if (hasCamera && hasAudio) {
+            captureVideoFile = videoFile
+          } else {
+            pendingCaptureVideoFile = videoFile
+            requestPermissions.launch(
+              arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
+            )
+          }
         },
         onAttach = { videoFile ->
           pendingAttachVideoFile = videoFile

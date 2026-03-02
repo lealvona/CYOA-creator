@@ -19,7 +19,7 @@ const FALLBACK_SAMPLE: StoryCatalogItem = {
 };
 
 export interface StoryLibraryProps {
-  onOpenStory: (storyUrl: string) => void;
+  onOpenStory: (story: StoryCatalogItem) => void;
 }
 
 export const StoryLibrary: FC<StoryLibraryProps> = ({ onOpenStory }) => {
@@ -76,7 +76,11 @@ export const StoryLibrary: FC<StoryLibraryProps> = ({ onOpenStory }) => {
             setImportStatus("Uploading package... 0%");
             const result = await importStoryZipWithProgress(file, (pct) => {
               setUploadProgress(pct);
-              setImportStatus(`Uploading package... ${pct}%`);
+              if (pct >= 100) {
+                setImportStatus("Processing package...");
+              } else {
+                setImportStatus(`Uploading package... ${pct}%`);
+              }
             });
             if (!result.ok) {
               setImportStatus(`Import failed: ${result.error ?? "Unknown error"}`);
@@ -88,8 +92,8 @@ export const StoryLibrary: FC<StoryLibraryProps> = ({ onOpenStory }) => {
               : "";
             setImportStatus(`Import complete${warnings}`);
             await loadStories();
-            if (result.story?.storyUrl) {
-              onOpenStory(result.story.storyUrl);
+            if (result.story) {
+              onOpenStory(result.story);
             }
           }}
         />
@@ -117,7 +121,7 @@ export const StoryLibrary: FC<StoryLibraryProps> = ({ onOpenStory }) => {
                     : "Incomplete package (playable draft)"}
                 </small>
               </div>
-              <button onClick={() => onOpenStory(story.storyUrl)}>Play</button>
+              <button onClick={() => onOpenStory(story)}>Play</button>
             </article>
           ))}
         </section>

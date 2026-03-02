@@ -14,6 +14,7 @@ const STORAGE_PREFIX = "cyoa-progress";
 
 export interface StoryViewerProps {
   storyUrl: string;
+  storyCompleteness?: "complete" | "incomplete";
   onExit?: () => void;
 }
 
@@ -56,7 +57,11 @@ function filterTimedChoices(
   return [];
 }
 
-export const StoryViewer: FC<StoryViewerProps> = ({ storyUrl, onExit }) => {
+export const StoryViewer: FC<StoryViewerProps> = ({
+  storyUrl,
+  storyCompleteness = "complete",
+  onExit,
+}) => {
   const {
     state,
     meta,
@@ -229,6 +234,12 @@ export const StoryViewer: FC<StoryViewerProps> = ({ storyUrl, onExit }) => {
           >
             Library
           </button>
+        )}
+
+        {storyCompleteness === "incomplete" && (
+          <div className="story-viewer__draft-badge" role="status">
+            Draft package: missing clips may be skipped.
+          </div>
         )}
 
         <VideoPlayer
