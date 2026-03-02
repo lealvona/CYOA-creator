@@ -9,7 +9,7 @@
     android:allowBackup="true"
     android:label="CYOA Creator"
     android:supportsRtl="true"
-    android:theme="@style/Theme.Material3.DayNight.NoActionBar">
+    android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
     <activity
       android:name=".MainActivity"
       android:exported="true">
