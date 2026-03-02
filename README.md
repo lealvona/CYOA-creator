@@ -633,8 +633,10 @@ Needed:
 Current test coverage:
 
 - `StoryEngine` unit tests in `src/engine/StoryEngine.test.ts` (Vitest)
+- React component tests for `StoryLibrary` and `StoryViewer`
 - API import smoke test (`npm run test:e2e:import`)
 - API security smoke test (`npm run test:e2e:import-security`)
+- API invalid-story import test (`npm run test:e2e:import-invalid`)
 
 Recommended next coverage:
 
@@ -720,6 +722,7 @@ Build/run (from `android-creator/`):
 | `npm run generate-placeholders` | Generate placeholder videos for sample story |
 | `npm run test:e2e:import` | API smoke test (imports a generated draft package and verifies catalog) |
 | `npm run test:e2e:import-security` | API security smoke test (path traversal and unexpected-file rejection) |
+| `npm run test:e2e:import-invalid` | API invalid-story test (reject malformed story graphs) |
 
 ---
 
