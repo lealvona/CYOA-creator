@@ -40,4 +40,5 @@ jobs:
           sleep 3
           npm run test:e2e:import
           npm run test:e2e:import-security
+          npm run test:e2e:import-invalid
           kill $SERVER_PID
