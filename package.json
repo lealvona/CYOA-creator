@@ -15,7 +15,8 @@
     "generate-placeholders": "node scripts/generate-placeholders.js",
     "validate-story": "node scripts/validate-story.js",
     "validate-sample": "node scripts/validate-story.js public/stories/sample/story.json",
-    "test:e2e:import": "node scripts/e2e-import-play.js"
+    "test:e2e:import": "node scripts/e2e-import-play.js",
+    "test:e2e:import-security": "node scripts/e2e-import-security.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
