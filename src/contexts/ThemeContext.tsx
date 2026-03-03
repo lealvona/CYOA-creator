@@ -24,7 +24,7 @@ export interface ThemeContextType {
   isDarkModeEnabled: boolean;
 }
 
-export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const STORAGE_KEY_THEME = 'ppd-theme-id';
 const STORAGE_KEY_MODE = 'ppd-theme-mode';
