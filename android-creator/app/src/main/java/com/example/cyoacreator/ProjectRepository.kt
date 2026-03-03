@@ -35,4 +35,12 @@ class ProjectRepository(context: Context) {
       )
     )
   }
+
+  suspend fun delete(projectId: String) {
+    dao.delete(projectId)
+  }
+
+  suspend fun deleteAll() {
+    dao.deleteAll()
+  }
 }

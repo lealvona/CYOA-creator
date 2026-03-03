@@ -128,6 +128,107 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
   }
 
+  /**
+   * Delete the entire project from the database.
+   */
+  fun deleteProject(project: CreatorProject) {
+    viewModelScope.launch {
+      repo.delete(project.id)
+      if (_uiState.value.selectedProject?.id == project.id) {
+        _uiState.update { it.copy(selectedProject = null) }
+      }
+      _uiState.update { it.copy(statusMessage = "Deleted project: ${project.name}") }
+    }
+  }
+
+  /**
+   * Delete all projects from the database.
+   */
+  fun deleteAllProjects() {
+    viewModelScope.launch {
+      repo.deleteAll()
+      _uiState.update { it.copy(selectedProject = null, statusMessage = "All projects deleted") }
+    }
+  }
+
+  /**
+   * Delete a node from the story.
+   * Also removes any choices that point to this node from other nodes.
+   */
+  fun deleteNode(nodeId: String) {
+    val selected = _uiState.value.selectedProject ?: return
+    viewModelScope.launch {
+      // Remove the node
+      val updatedNodes = selected.story.nodes.filterNot { it.id == nodeId }
+
+      // Remove choices pointing to this node from other nodes
+      val cleanedNodes = updatedNodes.map { node ->
+        node.copy(choices = node.choices.filterNot { it.targetNodeId == nodeId })
+      }
+
+      // If we deleted the start node, set a new start node if available
+      val newStartNodeId = if (selected.story.startNodeId == nodeId) {
+        cleanedNodes.firstOrNull { it.type == "start" }?.id
+          ?: cleanedNodes.firstOrNull()?.id
+          ?: ""
+      } else {
+        selected.story.startNodeId
+      }
+
+      val updatedStory = selected.story.copy(
+        nodes = cleanedNodes,
+        startNodeId = newStartNodeId
+      )
+
+      // Also remove any clip associated with this node
+      val updatedClips = selected.clips.filterNot { it.videoFile == "$nodeId.mp4" }
+
+      val updated = selected.copy(
+        story = updatedStory,
+        clips = updatedClips,
+        completeness = computeCompleteness(updatedStory, updatedClips)
+      )
+
+      repo.save(updated)
+      _uiState.update {
+        it.copy(
+          selectedProject = updated,
+          statusMessage = "Deleted node: $nodeId"
+        )
+      }
+    }
+  }
+
+  /**
+   * Delete a specific choice from a node.
+   */
+  fun deleteChoice(nodeId: String, choiceId: String) {
+    val selected = _uiState.value.selectedProject ?: return
+    viewModelScope.launch {
+      val updatedNodes = selected.story.nodes.map { node ->
+        if (node.id == nodeId) {
+          node.copy(choices = node.choices.filterNot { it.id == choiceId })
+        } else {
+          node
+        }
+      }
+
+      val updatedStory = selected.story.copy(nodes = updatedNodes)
+      val updated = selected.copy(
+        story = updatedStory,
+        completeness = computeCompleteness(updatedStory, selected.clips)
+      )
+
+      repo.save(updated)
+      _uiState.update {
+        it.copy(
+          selectedProject = updated,
+          statusMessage = "Deleted choice: $choiceId"
+        )
+      }
+    }
+  }
+
   fun importPackage(uri: Uri, strategy: ImportConflictStrategy) {
     viewModelScope.launch {
       _uiState.update { it.copy(isBusy = true, statusMessage = "Importing package...") }

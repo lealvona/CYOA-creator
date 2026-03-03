@@ -28,6 +28,12 @@ interface ProjectDao {
 
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun upsert(project: ProjectEntity)
+
+  @Query("DELETE FROM projects WHERE id = :id")
+  suspend fun delete(id: String)
+
+  @Query("DELETE FROM projects")
+  suspend fun deleteAll()
 }
 
 @Database(entities = [ProjectEntity::class], version = 2, exportSchema = false)

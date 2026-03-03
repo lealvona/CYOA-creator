@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -29,6 +30,8 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -39,6 +42,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -171,6 +176,8 @@ private fun CreatorApp(vm: MainViewModel) {
           importConflictStrategy = strategy
           importPackage.launch(arrayOf("application/zip", "application/octet-stream"))
         },
+        onDeleteProject = vm::deleteProject,
+        onDeleteAllProjects = vm::deleteAllProjects,
       )
     } else {
       ProjectWorkspace(
@@ -206,6 +213,10 @@ private fun CreatorApp(vm: MainViewModel) {
           val name = "${ui.selectedProject!!.name.replace(" ", "_")}.zip"
           createExportDocument.launch(name)
         },
+        onDeleteNode = vm::deleteNode,
+        onDeleteProject = {
+          vm.deleteProject(ui.selectedProject!!)
+        },
       )
     }
   }
@@ -235,7 +246,10 @@ private fun ProjectHome(
   onCreate: (name: String, text: String, useLlm: Boolean, llmConfig: LlmProviderConfig?) -> Unit,
   onOpen: (CreatorProject) -> Unit,
   onImportPackage: (ImportConflictStrategy) -> Unit,
+  onDeleteProject: (CreatorProject) -> Unit,
+  onDeleteAllProjects: () -> Unit,
 ) {
+  var showDeleteAllDialog by remember { mutableStateOf(false) }
   var name by remember { mutableStateOf("New Story") }
   var content by remember {
     mutableStateOf(
@@ -294,6 +308,16 @@ private fun ProjectHome(
             }
             FilledTonalButton(onClick = { onImportPackage(ImportConflictStrategy.OVERWRITE) }) {
               Text("Import Overwrite")
+            }
+            if (projects.isNotEmpty()) {
+              TextButton(
+                onClick = { showDeleteAllDialog = true },
+                colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                  contentColor = MaterialTheme.colorScheme.error
+                )
+              ) {
+                Text("Delete All")
+              }
             }
             if (isBusy) {
               CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterVertically))
@@ -414,9 +438,23 @@ private fun ProjectHome(
     } else {
       items(projects) { project ->
         val progress = computeProjectProgress(project)
+        var showDeleteDialog by remember { mutableStateOf(false) }
+
         ElevatedCard(onClick = { onOpen(project) }) {
           Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(project.name, fontWeight = FontWeight.Bold)
+            Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.SpaceBetween,
+              verticalAlignment = Alignment.CenterVertically
+            ) {
+              Text(project.name, fontWeight = FontWeight.Bold)
+              IconButton(
+                onClick = { showDeleteDialog = true },
+                modifier = Modifier.padding(0.dp)
+              ) {
+                Text("×", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.error)
+              }
+            }
             Text(
               "${project.story.meta.author} · ${project.story.meta.version}",
               style = MaterialTheme.typography.bodySmall,
@@ -435,8 +473,60 @@ private fun ProjectHome(
             )
           }
         }
+
+        if (showDeleteDialog) {
+          AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Project") },
+            text = { Text("Are you sure you want to delete '${project.name}'? This cannot be undone.") },
+            confirmButton = {
+              TextButton(
+                onClick = {
+                  onDeleteProject(project)
+                  showDeleteDialog = false
+                },
+                colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                  contentColor = MaterialTheme.colorScheme.error
+                )
+              ) {
+                Text("Delete")
+              }
+            },
+            dismissButton = {
+              TextButton(onClick = { showDeleteDialog = false }) {
+                Text("Cancel")
+              }
+            }
+          )
+        }
       }
     }
+  }
+
+  if (showDeleteAllDialog) {
+    AlertDialog(
+      onDismissRequest = { showDeleteAllDialog = false },
+      title = { Text("Delete All Projects") },
+      text = { Text("Are you sure you want to delete ALL projects? This cannot be undone.") },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            onDeleteAllProjects()
+            showDeleteAllDialog = false
+          },
+          colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+            contentColor = MaterialTheme.colorScheme.error
+          )
+        ) {
+          Text("Delete All")
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showDeleteAllDialog = false }) {
+          Text("Cancel")
+        }
+      }
+    )
   }
 }
 
@@ -451,10 +541,14 @@ private fun ProjectWorkspace(
   onAttach: (videoFile: String) -> Unit,
   onRemoveClip: (videoFile: String) -> Unit,
   onExport: () -> Unit,
+  onDeleteNode: (String) -> Unit,
+  onDeleteProject: () -> Unit,
 ) {
   val progress = computeProjectProgress(project)
   var filter by remember { mutableStateOf(NodeFilter.ALL) }
   var query by remember { mutableStateOf("") }
+  var showDeleteProjectDialog by remember { mutableStateOf(false) }
+  var nodeToDelete by remember { mutableStateOf<String?>(null) }
 
   val filteredNodes = remember(project, filter, query) {
     project.story.nodes.filter { node ->
@@ -513,6 +607,14 @@ private fun ProjectWorkspace(
           Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = onExport, modifier = Modifier.weight(1f)) {
               Text("Export ZIP")
+            }
+            TextButton(
+              onClick = { showDeleteProjectDialog = true },
+              colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                contentColor = MaterialTheme.colorScheme.error
+              )
+            ) {
+              Text("Delete")
             }
             if (isBusy) CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterVertically))
           }
@@ -618,6 +720,14 @@ private fun ProjectWorkspace(
                 Text("Remove")
               }
             }
+            TextButton(
+              onClick = { nodeToDelete = node.id },
+              colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+                contentColor = MaterialTheme.colorScheme.error
+              )
+            ) {
+              Text("Delete Node")
+            }
           }
         }
       }
@@ -634,5 +744,59 @@ private fun ProjectWorkspace(
         }
       }
     }
+  }
+
+  // Delete Node Confirmation Dialog
+  if (nodeToDelete != null) {
+    AlertDialog(
+      onDismissRequest = { nodeToDelete = null },
+      title = { Text("Delete Node") },
+      text = { Text("Are you sure you want to delete this node? This will also remove any choices that point to this node. This cannot be undone.") },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            onDeleteNode(nodeToDelete!!)
+            nodeToDelete = null
+          },
+          colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+            contentColor = MaterialTheme.colorScheme.error
+          )
+        ) {
+          Text("Delete")
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { nodeToDelete = null }) {
+          Text("Cancel")
+        }
+      }
+    )
+  }
+
+  // Delete Project Confirmation Dialog
+  if (showDeleteProjectDialog) {
+    AlertDialog(
+      onDismissRequest = { showDeleteProjectDialog = false },
+      title = { Text("Delete Project") },
+      text = { Text("Are you sure you want to delete '${project.name}'? This will remove all nodes, clips, and data. This cannot be undone.") },
+      confirmButton = {
+        TextButton(
+          onClick = {
+            onDeleteProject()
+            showDeleteProjectDialog = false
+          },
+          colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
+            contentColor = MaterialTheme.colorScheme.error
+          )
+        ) {
+          Text("Delete")
+        }
+      },
+      dismissButton = {
+        TextButton(onClick = { showDeleteProjectDialog = false }) {
+          Text("Cancel")
+        }
+      }
+    )
   }
 }
