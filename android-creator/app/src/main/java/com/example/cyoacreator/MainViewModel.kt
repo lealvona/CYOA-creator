@@ -67,7 +67,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         rawStoryText = text,
         parseMode = if (useLlm) ParseMode.LLM_FALLBACK else ParseMode.STRUCTURED_MARKDOWN,
         story = story,
-        completeness = Completeness.INCOMPLETE,
+        completeness = computeCompleteness(story, emptyList()),
       )
       repo.save(project)
       _uiState.update {
@@ -113,7 +113,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     viewModelScope.launch {
       val updated = selected.copy(
         clips = selected.clips.filterNot { it.videoFile == videoFile },
-        completeness = selected.computeCompleteness()
+        completeness = computeCompleteness(
+          selected.story,
+          selected.clips.filterNot { it.videoFile == videoFile },
+        )
       )
       repo.save(updated)
       _uiState.update {
@@ -139,31 +142,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val finalProject = if (existing == null) {
           imported
         } else {
-          when (strategy) {
-            ImportConflictStrategy.OVERWRITE -> {
-              imported.copy(
-                id = existing.id,
-                name = existing.name,
-                rawStoryText = existing.rawStoryText,
-                parseMode = existing.parseMode,
-                completeness = imported.computeCompleteness(imported.clips)
-              )
-            }
-
-            ImportConflictStrategy.MERGE -> {
-              val mergedClipMap = LinkedHashMap<String, ClipAsset>()
-              existing.clips.forEach { mergedClipMap[it.videoFile] = it }
-              imported.clips.forEach { mergedClipMap[it.videoFile] = it }
-
-              val mergedStory = if (imported.story.nodes.isNotEmpty()) imported.story else existing.story
-
-              existing.copy(
-                story = mergedStory,
-                clips = mergedClipMap.values.toList(),
-                completeness = existing.computeCompleteness(mergedClipMap.values.toList())
-              )
-            }
-          }
+          mergeImportedProject(existing, imported, strategy)
         }
 
         repo.save(finalProject)
@@ -214,12 +193,6 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
   private fun CreatorProject.withClip(videoFile: String, uri: String): CreatorProject {
     val updatedClips = clips.filterNot { it.videoFile == videoFile } +
       ClipAsset(videoFile = videoFile, uri = uri)
-    return copy(clips = updatedClips, completeness = computeCompleteness(updatedClips))
-  }
-
-  private fun CreatorProject.computeCompleteness(clipsOverride: List<ClipAsset> = clips): Completeness {
-    if (story.nodes.isEmpty()) return Completeness.INCOMPLETE
-    val allPresent = story.nodes.all { node -> clipsOverride.any { it.videoFile == node.videoFile } }
-    return if (allPresent) Completeness.COMPLETE else Completeness.INCOMPLETE
+    return copy(clips = updatedClips, completeness = computeCompleteness(story, updatedClips))
   }
 }

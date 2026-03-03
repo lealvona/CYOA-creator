@@ -1,6 +1,8 @@
 plugins {
   id("com.android.application")
   id("org.jetbrains.kotlin.android")
+  id("org.jetbrains.kotlin.plugin.compose")
+  id("org.jetbrains.kotlin.plugin.serialization")
   id("com.google.devtools.ksp")
 }
 
@@ -27,6 +29,11 @@ android {
 
   kotlinOptions {
     jvmTarget = "17"
+  }
+
+  compileOptions {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
   }
 
   packaging {
@@ -66,4 +73,6 @@ dependencies {
   implementation("androidx.camera:camera-lifecycle:1.4.1")
   implementation("androidx.camera:camera-video:1.4.1")
   implementation("androidx.camera:camera-view:1.4.1")
+
+  testImplementation("junit:junit:4.13.2")
 }

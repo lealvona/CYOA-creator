@@ -39,7 +39,7 @@ class PackageImporter(private val context: Context) {
 
               name == "package.manifest.json" -> {
                 val raw = zis.readBytes().decodeToString()
-                if (raw.contains("\"completeness\"\s*:\s*\"complete\"".toRegex())) {
+                if (raw.contains(""""completeness"\s*:\s*"complete""".toRegex())) {
                   completeness = Completeness.COMPLETE
                 }
               }
