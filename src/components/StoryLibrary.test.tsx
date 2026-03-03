@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import type { StoryCatalogItem } from "../types/library";
 import { StoryLibrary } from "./StoryLibrary";
+import { ThemeProvider } from "../contexts/ThemeContext";
 
 const apiMocks = vi.hoisted(() => {
   return {
@@ -15,6 +16,20 @@ vi.mock("../utils/storyApi", () => ({
   fetchAllStories: apiMocks.fetchAllStories,
   importStoryZipWithProgress: apiMocks.importStoryZipWithProgress,
 }));
+
+Object.defineProperty(window, "matchMedia", {
+  writable: true,
+  value: vi.fn().mockImplementation((query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
 
 const importedStory: StoryCatalogItem = {
   id: "imported-1",
@@ -44,6 +59,10 @@ const bundledStory: StoryCatalogItem = {
   },
 };
 
+function renderWithProviders(ui: React.ReactElement) {
+  return render(<ThemeProvider>{ui}</ThemeProvider>);
+}
+
 describe("StoryLibrary", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -57,7 +76,7 @@ describe("StoryLibrary", () => {
     apiMocks.fetchAllStories.mockResolvedValue([bundledStory]);
     const onOpenStory = vi.fn();
 
-    render(<StoryLibrary onOpenStory={onOpenStory} />);
+    renderWithProviders(<StoryLibrary onOpenStory={onOpenStory} />);
 
     expect(await screen.findByText("The Forgotten Lab")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Play" }));
@@ -82,7 +101,7 @@ describe("StoryLibrary", () => {
     );
 
     const onOpenStory = vi.fn();
-    render(<StoryLibrary onOpenStory={onOpenStory} />);
+    renderWithProviders(<StoryLibrary onOpenStory={onOpenStory} />);
 
     const input = await screen.findByLabelText("Import story package (.zip)");
     const file = new File(["zip"], "story.zip", { type: "application/zip" });
