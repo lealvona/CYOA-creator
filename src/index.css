@@ -2,6 +2,8 @@
    Global Styles — Interactive Video Story Engine
    ================================================================ */
 
+@import './styles/brand-variables.css';
+
 *,
 *::before,
 *::after {
@@ -9,22 +11,13 @@
 }
 
 :root {
-  /* Design tokens */
-  --color-primary: #4ecdc4;
-  --color-danger: #ff6b6b;
-  --color-bg: #0a0a0a;
-  --color-surface: #1a1a2e;
-  --color-text: #ffffff;
-  --color-text-muted: rgba(255, 255, 255, 0.6);
-
   /* Typography */
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, sans-serif;
-  line-height: 1.5;
+  font-family: var(--brand-font-family);
+  line-height: var(--brand-line-height);
   font-weight: 400;
-  color-scheme: dark;
-  color: var(--color-text);
-  background-color: var(--color-bg);
+  color-scheme: dark light;
+  color: var(--brand-text);
+  background-color: var(--brand-bg);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -55,7 +48,7 @@ button {
 /* Focus visible for accessibility */
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--brand-primary);
   outline-offset: 2px;
 }
 
@@ -69,4 +62,20 @@ a:focus:not(:focus-visible) {
 ::selection {
   background: rgba(78, 205, 196, 0.3);
   color: #fff;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

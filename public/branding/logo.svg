@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="flameGradient1" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#ff6b35;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#f7931e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffd700;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="flameGradient2" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#e63946;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#f4a261;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e9c46a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="logGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#5d4037;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8d6e63;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4e342e;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="80%" r="50%">
+      <stop offset="0%" style="stop-color:#ff6b35;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#ff6b35;stop-opacity:0" />
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background glow -->
+  <ellipse cx="100" cy="140" rx="60" ry="30" fill="url(#glow)"/>
+  
+  <!-- Layer 1: Logs/Base -->
+  <g id="logs" filter="url(#shadow)">
+    <!-- Log 1 - angled left -->
+    <path d="M 65 145 L 95 160 L 125 145 L 120 140 L 95 152 L 70 140 Z" 
+          fill="url(#logGradient)"/>
+    <!-- Log 2 - angled right -->
+    <path d="M 75 140 L 95 155 L 135 145 L 130 140 L 95 148 L 80 135 Z" 
+          fill="url(#logGradient)"/>
+    <!-- Log 3 - front horizontal -->
+    <rect x="70" y="150" width="60" height="12" rx="2" 
+          fill="url(#logGradient)"/>
+    <!-- Log details - bark texture lines -->
+    <line x1="80" y1="154" x2="80" y2="158" stroke="#3e2723" stroke-width="1" opacity="0.5"/>
+    <line x1="95" y1="154" x2="95" y2="158" stroke="#3e2723" stroke-width="1" opacity="0.5"/>
+    <line x1="110" y1="154" x2="110" y2="158" stroke="#3e2723" stroke-width="1" opacity="0.5"/>
+  </g>
+  
+  <!-- Layer 2: Main Flames -->
+  <g id="mainFlames">
+    <!-- Outer flame -->
+    <path d="M 100 150 
+             Q 85 130, 80 110 
+             Q 75 90, 85 70 
+             Q 90 50, 100 35 
+             Q 110 50, 115 70 
+             Q 125 90, 120 110 
+             Q 115 130, 100 150 Z" 
+          fill="url(#flameGradient1)" opacity="0.9"/>
+    
+    <!-- Middle flame -->
+    <path d="M 100 145 
+             Q 90 125, 88 105 
+             Q 86 85, 92 68 
+             Q 96 55, 100 45 
+             Q 104 55, 108 68 
+             Q 114 85, 112 105 
+             Q 110 125, 100 145 Z" 
+          fill="url(#flameGradient2)" opacity="0.95"/>
+    
+    <!-- Inner bright flame -->
+    <path d="M 100 140 
+             Q 94 120, 95 100 
+             Q 96 80, 100 60 
+             Q 104 80, 105 100 
+             Q 106 120, 100 140 Z" 
+          fill="#fff5e6" opacity="0.8"/>
+    
+    <!-- Small flame tips -->
+    <ellipse cx="92" cy="75" rx="4" ry="8" fill="#ffd700" opacity="0.7"/>
+    <ellipse cx="108" cy="72" rx="3" ry="6" fill="#ffd700" opacity="0.7"/>
+  </g>
+  
+  <!-- Layer 3: Drama Masks integrated with flames -->
+  <g id="masks">
+    <!-- Comedy Mask (Thalia) - Left side, smiling -->
+    <g transform="translate(75, 95) rotate(-15)">
+      <!-- Mask shape -->
+      <ellipse cx="0" cy="0" rx="18" ry="22" fill="#2c3e50" opacity="0.9"/>
+      <!-- Eyes - happy/curved up -->
+      <path d="M -10 -5 Q -6 -8, -2 -5" stroke="#ecf0f1" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M 2 -5 Q 6 -8, 10 -5" stroke="#ecf0f1" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <!-- Smile -->
+      <path d="M -8 8 Q 0 14, 8 8" stroke="#ecf0f1" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <!-- Mask outline glow -->
+      <ellipse cx="0" cy="0" rx="20" ry="24" fill="none" stroke="#f39c12" stroke-width="1" opacity="0.5"/>
+    </g>
+    
+    <!-- Tragedy Mask (Melpomene) - Right side, frowning -->
+    <g transform="translate(125, 95) rotate(15)">
+      <!-- Mask shape -->
+      <ellipse cx="0" cy="0" rx="18" ry="22" fill="#2c3e50" opacity="0.9"/>
+      <!-- Eyes - sad/curved down -->
+      <path d="M -10 -5 Q -6 -2, -2 -5" stroke="#ecf0f1" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M 2 -5 Q 6 -2, 10 -5" stroke="#ecf0f1" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <!-- Frown -->
+      <path d="M -8 12 Q 0 6, 8 12" stroke="#ecf0f1" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <!-- Mask outline glow -->
+      <ellipse cx="0" cy="0" rx="20" ry="24" fill="none" stroke="#f39c12" stroke-width="1" opacity="0.5"/>
+    </g>
+    
+    <!-- Small decorative flames around masks -->
+    <circle cx="75" cy="75" r="3" fill="#ff6b35" opacity="0.6"/>
+    <circle cx="125" cy="72" r="2.5" fill="#ff6b35" opacity="0.6"/>
+    <circle cx="100" cy="55" r="2" fill="#ffd700" opacity="0.7"/>
+  </g>
+  
+  <!-- Layer 4: Spark particles -->
+  <g id="sparks" opacity="0.8">
+    <circle cx="85" cy="60" r="1.5" fill="#ffd700"/>
+    <circle cx="115" cy="65" r="1" fill="#ff6b35"/>
+    <circle cx="95" cy="50" r="1.2" fill="#ffd700"/>
+    <circle cx="105" cy="58" r="0.8" fill="#fff"/>
+    <circle cx="90" cy="85" r="1" fill="#ff6b35"/>
+    <circle cx="110" cy="80" r="1.3" fill="#ffd700"/>
+  </g>
+  
+  <!-- Layer 5: CYOA Text -->
+  <text x="100" y="185" 
+        text-anchor="middle" 
+        font-family="Inter, system-ui, sans-serif" 
+        font-size="16" 
+        font-weight="700" 
+        fill="#2c3e50"
+        letter-spacing="3">
+    CYOA
+  </text>
+  
+  <!-- Decorative underline -->
+  <line x1="70" y1="190" x2="130" y2="190" 
+        stroke="#e74c3c" 
+        stroke-width="2" 
+        stroke-linecap="round"/>
+</svg>

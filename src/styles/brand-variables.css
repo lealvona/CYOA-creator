@@ -1,0 +1,166 @@
+/* Brand CSS Variables */
+
+:root {
+  /* Typography */
+  --brand-font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --brand-heading-font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --brand-base-size: 16px;
+  --brand-line-height: 1.5;
+  
+  /* Default/Dark Mode Colors */
+  --brand-primary: #4ecdc4;
+  --brand-primary-hover: #45b8b0;
+  --brand-secondary: #ff6b6b;
+  --brand-danger: #ff6b6b;
+  --brand-success: #4ecdc4;
+  --brand-warning: #f1af01;
+  --brand-bg: #0a0a0a;
+  --brand-surface: #1a1a2e;
+  --brand-text: #ffffff;
+  --brand-text-muted: rgba(255, 255, 255, 0.6);
+  --brand-border: rgba(255, 255, 255, 0.12);
+  
+  /* Asset paths */
+  --brand-logo: url('/branding/logo.svg');
+  --brand-hero-bg: url('/branding/hero-bg.svg');
+}
+
+/* Light mode */
+[data-theme-mode="light"] {
+  --brand-primary: #4ecdc4;
+  --brand-primary-hover: #45b8b0;
+  --brand-secondary: #ff6b6b;
+  --brand-danger: #ff6b6b;
+  --brand-success: #4ecdc4;
+  --brand-warning: #f1af01;
+  --brand-bg: #f8fafc;
+  --brand-surface: #ffffff;
+  --brand-text: #1a1a2e;
+  --brand-text-muted: rgba(26, 26, 46, 0.6);
+  --brand-border: rgba(26, 26, 46, 0.12);
+}
+
+/* UCSC Theme */
+[data-theme="ucsc"][data-theme-mode="dark"],
+[data-theme="ucsc"][data-theme-mode="system"] {
+  --brand-primary: #006aad;
+  --brand-primary-hover: #005a8c;
+  --brand-secondary: #fdc700;
+  --brand-bg: #0f172a;
+  --brand-surface: #1e293b;
+}
+
+[data-theme="ucsc"][data-theme-mode="light"] {
+  --brand-primary: #003c6c;
+  --brand-primary-hover: #002d52;
+  --brand-secondary: #fdc700;
+  --brand-bg: #f8fafc;
+  --brand-surface: #ffffff;
+}
+
+/* Classic Theme */
+[data-theme="classic"][data-theme-mode="dark"],
+[data-theme="classic"][data-theme-mode="system"] {
+  --brand-primary: #14b8a6;
+  --brand-primary-hover: #0d9488;
+  --brand-secondary: #94a3b8;
+}
+
+[data-theme="classic"][data-theme-mode="light"] {
+  --brand-primary: #0d9488;
+  --brand-primary-hover: #0f766e;
+  --brand-secondary: #64748b;
+}
+
+/* High Contrast Theme */
+[data-theme="high-contrast"][data-theme-mode="dark"],
+[data-theme="high-contrast"][data-theme-mode="system"] {
+  --brand-primary: #00ffff;
+  --brand-primary-hover: #00cccc;
+  --brand-secondary: #ffff00;
+  --brand-bg: #000000;
+  --brand-surface: #000000;
+  --brand-text: #ffffff;
+  --brand-text-muted: #cccccc;
+  --brand-border: #ffffff;
+}
+
+[data-theme="high-contrast"][data-theme-mode="light"] {
+  --brand-primary: #0000ff;
+  --brand-primary-hover: #0000cc;
+  --brand-secondary: #ff00ff;
+  --brand-bg: #ffffff;
+  --brand-surface: #ffffff;
+  --brand-text: #000000;
+  --brand-text-muted: #333333;
+  --brand-border: #000000;
+}
+
+/* Warm Theme */
+[data-theme="warm"][data-theme-mode="dark"],
+[data-theme="warm"][data-theme-mode="system"] {
+  --brand-primary: #fb923c;
+  --brand-primary-hover: #f97316;
+  --brand-secondary: #f87171;
+  --brand-bg: #1c1917;
+  --brand-surface: #292524;
+  --brand-text: #fafaf9;
+}
+
+[data-theme="warm"][data-theme-mode="light"] {
+  --brand-primary: #f97316;
+  --brand-primary-hover: #ea580c;
+  --brand-secondary: #dc2626;
+  --brand-bg: #fff7ed;
+  --brand-surface: #ffffff;
+  --brand-text: #431407;
+}
+
+/* Cool Theme */
+[data-theme="cool"][data-theme-mode="dark"],
+[data-theme="cool"][data-theme-mode="system"] {
+  --brand-primary: #818cf8;
+  --brand-primary-hover: #6366f1;
+  --brand-secondary: #a78bfa;
+  --brand-bg: #0f0a1e;
+  --brand-surface: #1e1b4b;
+  --brand-text: #e0e7ff;
+}
+
+[data-theme="cool"][data-theme-mode="light"] {
+  --brand-primary: #6366f1;
+  --brand-primary-hover: #4f46e5;
+  --brand-secondary: #8b5cf6;
+  --brand-bg: #eef2ff;
+  --brand-surface: #ffffff;
+  --brand-text: #1e1b4b;
+}
+
+/* System preference detection */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme-mode="light"]) {
+    --brand-primary: #4ecdc4;
+    --brand-primary-hover: #45b8b0;
+    --brand-secondary: #ff6b6b;
+    --brand-danger: #ff6b6b;
+    --brand-success: #4ecdc4;
+    --brand-warning: #f1af01;
+    --brand-bg: #0a0a0a;
+    --brand-surface: #1a1a2e;
+    --brand-text: #ffffff;
+    --brand-text-muted: rgba(255, 255, 255, 0.6);
+    --brand-border: rgba(255, 255, 255, 0.12);
+  }
+}
+
+/* Theme transitions */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Disable transitions for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
