@@ -17,9 +17,6 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run test -- --run
-      - run: npm run build
-        env:
-          GITHUB_PAGES: true
       - name: Build web
         run: |
           VERSION="${GITHUB_REF#refs/tags/}"
@@ -32,22 +29,287 @@ jobs:
         run: |
           VERSION="${GITHUB_REF#refs/tags/}"
           mkdir -p ../release
-          # Create README
-          echo "CYOA-creator Web v${VERSION}" > README.txt
-          echo "Deploy to any web server. See GitHub wiki for instructions." >> README.txt
-          cp README.txt README.md
-          # Create deploy script
-          echo '#!/bin/bash' > deploy.sh
-          echo 'TARGET="${1:-/var/www/cyoa}"' >> deploy.sh
-          echo 'mkdir -p "$TARGET" && cp -r . "$TARGET/"' >> deploy.sh
+          
+          # Copy docs for offline reference
+          mkdir -p docs
+          cp ../../docs/README.md docs/ || true
+          cp ../../docs/quickstart.md docs/ || true
+          cp ../../docs/story-format.md docs/ || true
+          cp ../../docs/architecture.md docs/ || true
+          cp ../../docs/themes.md docs/ || true
+          cp ../../docs/branding.md docs/ || true
+          
+          # Create comprehensive README
+          cat > README.md << 'ENDOFREADME'
+# CYOA-creator Web Application
+
+## Version: $VERSION
+
+CYOA-creator is an interactive choose-your-own-adventure video story engine built with React, TypeScript, and Vite.
+
+## Quick Start
+
+1. Extract this ZIP to a web folder
+2. Open index.html in a browser
+3. Or deploy to any web server (see deployment options below)
+
+## Features
+
+- Video-based interactive stories with branching narratives
+- During-video choices (make decisions while video plays)
+- Save/resume progress (stored in browser localStorage)
+- Multiple themes (dark, light, UCSC, etc.)
+- Analytics dashboard showing choice statistics
+- Mobile/touch optimized
+- Video transition effects (crossfade, fade-black, fade-white)
+- ZIP story import for content creators
+- Accessibility support (keyboard navigation, screen readers)
+
+## Deployment Options
+
+### Option 1: GitHub Pages (Free)
+1. Go to your repository Settings > Pages
+2. Select "Deploy from a branch"
+3. Choose "main" branch and folder "/(root)"
+4. Upload all files from this ZIP to the root of your gh-pages branch
+
+### Option 2: Nginx
+```bash
+# Extract to web folder
+unzip CYOA-creator-web-*.zip -d /var/www/cyoa-creator
+
+# nginx config example:
+server {
+    listen 80;
+    server_name your-domain.com;
+    root /var/www/cyoa-creator;
+    index index.html;
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
+### Option 3: Apache
+Extract to /var/www/html/cyoa-creator/ or your public_html folder.
+The included .htaccess handles SPA routing.
+
+### Option 4: Docker
+```dockerfile
+FROM nginx:alpine
+COPY . /usr/share/nginx/html/
+RUN echo 'try_files $uri $uri/ /index.html;' > /etc/nginx/conf.d/default.conf
+```
+```bash
+docker build -t cyoa-creator .
+docker run -p 8080:80 cyoa-creator
+```
+
+### Option 5: Vercel (Free)
+```bash
+npm i -g vercel
+vercel --prod
+```
+Or drag and drop the extracted folder to Vercel.
+
+### Option 6: Netlify (Free)
+Drag and drop the extracted folder to Netlify dashboard.
+
+### Option 7: Python Simple HTTP Server (Development)
+```bash
+cd /path/to/cyoa-creator
+python3 -m http.server 8000
+```
+Then open http://localhost:8000
+
+### Option 8: Windows IIS
+1. Install IIS via Windows Features
+2. Extract ZIP to C:\inetpub\wwwroot\cyoa
+3. Add MIME types for .json, .webm, .mp4
+4. Configure URL Rewrite for SPA routing
+
+## Privacy & Security
+
+This application stores ALL data in the browser's localStorage:
+- Story progress and save states
+- Theme preferences
+- Analytics data
+
+**No data is sent to any server.** The app works entirely client-side.
+
+## Story Format
+
+Stories are JSON files with video references. See docs/story-format.md for the schema.
+
+## Creating Stories
+
+1. Use the Android app (CYOA-creator-android-*.apk) to record video clips
+2. Or create story JSON manually (see docs/story-format.md)
+3. Package as ZIP with story.json and videos/ folder
+4. Import via the web app's "Import" button
+
+## Troubleshooting
+
+### Video not playing
+- Ensure video files are in a videos/ subfolder
+- Check browser console for CORS errors
+- Use modern formats: webm, mp4
+
+### Import fails
+- ZIP must contain story.json at root
+- Videos must be in videos/ folder
+- Max ZIP size: 500MB
+
+### Choices not showing
+- Ensure story.json has valid choices array
+- Check console for validation errors
+
+## Documentation
+
+See the docs/ folder for:
+- README.md - Project overview
+- quickstart.md - Getting started guide
+- story-format.md - Story JSON schema
+- architecture.md - Technical architecture
+- themes.md - Theme customization
+- branding.md - Brand customization guide
+
+## License
+
+See LICENSE file in the repository.
+
+## Support
+
+Report issues at: https://github.com/lealvona/CYOA-creator/issues
+ENDOFREADME
+
+          cp README.md README.txt
+          
+          # Create deploy script (Linux/Mac)
+          cat > deploy.sh << 'ENDSCRIPT'
+#!/bin/bash
+# CYOA-creator Deployment Script (Linux/Mac)
+
+TARGET="${1:-/var/www/cyoa}"
+echo "Deploying CYOA-creator to $TARGET"
+
+if [ "$EUID" -eq 0 ]; then
+    mkdir -p "$TARGET"
+    cp -r . "$TARGET/"
+    echo "Deployed successfully to $TARGET"
+else
+    echo "Error: Not running as root"
+    echo ""
+    echo "Options:"
+    echo "  1. Run with sudo: sudo $0"
+    echo "  2. Run with custom path: $0 /path/to/deploy"
+    echo "  3. Use Docker: docker run -v \$(pwd):/usr/share/nginx/html nginx:alpine"
+    exit 1
+fi
+ENDSCRIPT
           chmod +x deploy.sh
-          # Create .htaccess
-          echo "RewriteEngine On" > .htaccess
-          echo "RewriteBase /" >> .htaccess
-          echo "RewriteRule ^index.html$ - [L]" >> .htaccess
-          echo "RewriteCond %{REQUEST_FILENAME} !-f" >> .htaccess
-          echo "RewriteCond %{REQUEST_FILENAME} !-d" >> .htaccess
-          echo "RewriteRule . /index.html [L]" >> .htaccess
+          
+          # Create Windows deploy script (PowerShell)
+          cat > deploy.ps1 << 'ENDPS'
+# CYOA-creator Deployment Script (Windows PowerShell)
+# Run as Administrator or adjust target path
+
+param(
+    [string]$Target = "C:\inetpub\wwwroot\cyoa"
+)
+
+Write-Host "Deploying CYOA-creator to $Target" -ForegroundColor Cyan
+
+if (Test-Path $Target) {
+    Write-Host "Target exists, copying files..." -ForegroundColor Yellow
+} else {
+    Write-Host "Creating target directory..." -ForegroundColor Yellow
+    New-Item -ItemType Directory -Path $Target -Force | Out-Null
+}
+
+Copy-Item -Path . -Destination $Target -Recurse -Force
+Write-Host "Deployed successfully to $Target" -ForegroundColor Green
+Write-Host ""
+Write-Host "To test locally, run: Start-Process http://localhost/cyoa" -ForegroundColor Cyan
+ENDPS
+          
+          # Create .htaccess for Apache
+          cat > .htaccess << 'ENDHTACCESS'
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.html$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]
+ENDHTACCESS
+          
+          # Create web.config for IIS
+          cat > web.config << 'ENDWEBCONFIG'
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <system.webServer>
+    <rewrite>
+      <rules>
+        <rule name="SPA" stopProcessing="true">
+          <match url=".*" />
+          <conditions logicalGrouping="MatchAll">
+            <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+            <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+          </conditions>
+          <action type="Rewrite" url="/index.html" />
+        </rule>
+      </rules>
+    </rewrite>
+    <staticContent>
+      <mimeMap fileExtension=".json" mimeType="application/json" />
+      <mimeMap fileExtension=".webm" mimeType="video/webm" />
+      <mimeMap fileExtension=".mp4" mimeType="video/mp4" />
+      <mimeMap fileExtension=".svg" mimeType="image/svg+xml" />
+    </staticContent>
+  </system.webServer>
+</configuration>
+ENDWEBCONFIG
+          
+          # Create Docker Compose for easy deployment
+          cat > docker-compose.yml << 'ENDDOCKER'
+version: '3'
+services:
+  cyoa:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/usr/share/nginx/html:ro
+    volumes_from:
+      - 
+    command: /bin/sh -c "echo 'try_files $$uri $$uri/ /index.html;' > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+ENDDOCKER
+          
+          # Create nginx.conf
+          cat > nginx.conf << 'ENDNGINX'
+server {
+    listen 80;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+    
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+    
+    # Cache videos aggressively
+    location ~* \.(webm|mp4)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    # Don't cache HTML
+    location ~* \.html$ {
+        add_header Cache-Control "no-cache";
+    }
+}
+ENDNGINX
+
           # Create zip
           zip -r ../release/CYOA-creator-web-${VERSION}.zip .
 
@@ -96,11 +358,8 @@ jobs:
           pattern: android-artifact
           merge-multiple: false
       - run: |
-          ls -la
-          # Find and move the zip file to root
           find . -name "*.zip" -exec mv {} . \;
           find . -name "*.apk" -exec mv {} . \;
-          ls -la
         name: organize files
       - run: |
           echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
