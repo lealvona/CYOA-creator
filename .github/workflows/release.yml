@@ -24,6 +24,54 @@ jobs:
           VERSION="${GITHUB_REF#refs/tags/}"
           mkdir -p release
           cd dist
+          # Create README
+          cat > README.txt << 'ENDOFFILE'
+================================================================================
+CYOA-CREATOR WEB APPLICATION
+================================================================================
+
+VERSION: $VERSION
+
+REQUIREMENTS:
+- A web server (nginx, Apache, Caddy, GitHub Pages, Vercel, Netlify)
+- HTTPS recommended for production use
+
+DEPLOYMENT OPTIONS:
+
+1. GitHub Pages - Upload to gh-pages branch
+2. Nginx - Copy to /var/www/cyoa-creator/
+3. Apache - Copy to /var/www/html/cyoa-creator/
+4. Docker - Use nginx:alpine
+5. Vercel/Netlify - Drag and drop
+
+Note: Client-side SPA. All data stored in browser localStorage.
+================================================================================
+ENDOFFILE
+          cp README.txt README.md
+          # Create deploy script
+          cat > deploy.sh << 'ENDOFFILE'
+#!/bin/bash
+# CYOA-creator Web Deployment Script
+TARGET="${1:-/var/www/cyoa-creator}"
+echo "Deploying CYOA-creator to $TARGET"
+if [ "$EUID" -eq 0 ]; then
+    mkdir -p "$TARGET" && cp -r . "$TARGET/"
+    echo "Deployed successfully!"
+else
+    echo "Run with sudo or use Docker"
+    exit 1
+fi
+ENDOFFILE
+          chmod +x deploy.sh
+          # Create .htaccess
+          cat > .htaccess << 'ENDOFFILE'
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.html$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]
+ENDOFFILE
           zip -r ../release/CYOA-creator-web-${VERSION}.zip .
       - uses: actions/upload-artifact@v4
         with:
