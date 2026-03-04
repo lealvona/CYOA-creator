@@ -12,7 +12,8 @@
     "videoBasePath": "/stories/sample/videos",
     "preloadNext": true,
     "defaultVolume": 0.8,
-    "choiceLeadTime": 0
+    "choiceLeadTime": 0,
+    "defaultTransition": { "type": "crossfade", "durationMs": 600 }
   },
   "startNodeId": "intro",
   "nodes": [
@@ -89,6 +90,7 @@
       "type": "video",
       "videoFile": "encrypted.webm",
       "subtitle": "The files reveal a disturbing experiment...",
+      "transition": { "type": "fade-black", "durationMs": 800 },
       "setsFlags": ["knows_truth"],
       "choices": [
         {

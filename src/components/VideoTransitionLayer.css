@@ -1,0 +1,106 @@
+.transition-layer {
+  --transition-duration: 500ms;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+.transition-layer[data-theme] {
+  background: var(--theme-background, #000);
+}
+
+.transition-layer__front,
+.transition-layer__back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.transition-layer__front {
+  z-index: 2;
+}
+
+.transition-layer__back {
+  z-index: 1;
+}
+
+.transition-layer__hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Keyframes for crossfade */
+@keyframes crossfade-front {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes crossfade-back {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Keyframes for fade to black */
+@keyframes fade-black-front {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes fade-black-back {
+  0% { opacity: 0; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Keyframes for fade to white */
+@keyframes fade-white-front {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes fade-white-back {
+  0% { opacity: 0; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Crossfade transition */
+.transition-layer--crossfade.transition-layer__front {
+  animation: crossfade-front var(--transition-duration) forwards;
+}
+
+.transition-layer--crossfade.transition-layer__back {
+  animation: crossfade-back var(--transition-duration) forwards;
+}
+
+/* Fade to black */
+.transition-layer--fade-black.transition-layer__front {
+  animation: fade-black-front var(--transition-duration) forwards;
+}
+
+.transition-layer--fade-black.transition-layer__back {
+  animation: fade-black-back var(--transition-duration) forwards;
+}
+
+/* Fade to white */
+.transition-layer--fade-white.transition-layer__front {
+  animation: fade-white-front var(--transition-duration) forwards;
+}
+
+.transition-layer--fade-white.transition-layer__back {
+  animation: fade-white-back var(--transition-duration) forwards;
+}
+
+/* Cut - instant swap (no animation) */
+.transition-layer--cut {
+  /* No animation needed - just instant swap */
+}

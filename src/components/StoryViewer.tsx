@@ -5,7 +5,7 @@ import {
 } from "../engine/StoryEngine";
 import { useStoryEngine } from "../hooks/useStoryEngine";
 import { StartScreen } from "./StartScreen";
-import { VideoPlayer } from "./VideoPlayer";
+import { VideoTransitionLayer } from "./VideoTransitionLayer";
 import { ChoiceOverlay } from "./ChoiceOverlay";
 import { EndScreen } from "./EndScreen";
 import "./StoryViewer.css";
@@ -303,10 +303,10 @@ export const StoryViewer: FC<StoryViewerProps> = ({
           </div>
         )}
 
-        <VideoPlayer
-          key={state.currentNode.id}
+        <VideoTransitionLayer
           node={state.currentNode}
           videoUrl={videoUrl}
+          transition={state.currentNode.transition ?? config?.defaultTransition ?? { type: "cut" }}
           onEnded={videoEnded}
           preloadUrls={preloadUrls}
           volume={config?.defaultVolume ?? 1}

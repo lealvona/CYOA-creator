@@ -60,6 +60,12 @@ export type NodeType =
   | "ending"   // Terminal node — story ends here
   | "start";   // Entry point — the first node played
 
+/** Configuration for video transitions between nodes. */
+export interface Transition {
+  type: "cut" | "crossfade" | "fade-black" | "fade-white";
+  durationMs?: number; // default 500
+}
+
 /** A single node in the story graph. */
 export interface StoryNode {
   /** Unique identifier for this node. Used as lookup key and in file naming. */
@@ -98,6 +104,12 @@ export interface StoryNode {
    * Useful for thematic transitions.
    */
   theme?: string;
+
+  /**
+   * Optional transition effect to use when navigating to the next node.
+   * If omitted, uses the story's defaultTransition or "cut".
+   */
+  transition?: Transition;
 
   /**
    * Optional flag keys to set when this node is visited.
@@ -177,6 +189,13 @@ export interface StoryConfig {
    * Default: 0 (show exactly when video ends).
    */
   choiceLeadTime?: number;
+
+  /**
+   * Default transition effect for all nodes.
+   * Individual nodes can override with their own transition setting.
+   * Default: { type: "cut" }
+   */
+  defaultTransition?: Transition;
 }
 
 // ---------------------------------------------------------------------------
