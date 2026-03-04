@@ -62,6 +62,20 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: .
+          pattern: web-artifact
+          merge-multiple: false
+      - uses: actions/download-artifact@v4
+        with:
+          path: .
+          pattern: android-artifact
+          merge-multiple: false
+      - run: |
+          ls -la
+          # Find and move the zip file to root
+          find . -name "*.zip" -exec mv {} . \;
+          find . -name "*.apk" -exec mv {} . \;
+          ls -la
+        name: organize files
       - run: |
           echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
         id: get_tag
@@ -72,8 +86,8 @@ jobs:
         with:
           body_path: release-notes.md
           files: |
-            *.zip
-            *.apk
+            CYOA-creator-web-*.zip
+            CYOA-creator-android-*.apk
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
