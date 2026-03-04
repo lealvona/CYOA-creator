@@ -27,8 +27,8 @@ async function fetchBundledStories(): Promise<StoryCatalogItem[]> {
     }
     const index = (await response.json()) as BundledStoryIndex;
 
-    const stories: StoryCatalogItem[] = await Promise.all(
-      index.stories.map(async (bundled) => {
+    const results = await Promise.all(
+      index.stories.map(async (bundled): Promise<StoryCatalogItem | null> => {
         try {
           const storyResponse = await fetch(bundled.storyUrl);
           if (!storyResponse.ok) {
@@ -48,7 +48,7 @@ async function fetchBundledStories(): Promise<StoryCatalogItem[]> {
       })
     );
 
-    return stories.filter((s): s is StoryCatalogItem => s !== null);
+    return results.filter((s): s is StoryCatalogItem => s !== null);
   } catch {
     return [];
   }

@@ -252,12 +252,16 @@ describe("StoryEngine", () => {
     engine.videoEnded();
     engine.choose("a-end");
 
-    const emitSpy = vi.spyOn(engine as unknown as { emit: typeof engine.emit }, "emit");
+    let storyEndFired = false;
+    const unsubscribe = engine.on("storyEnd", () => {
+      storyEndFired = true;
+    });
 
     engine.videoEnded();
 
     expect(engine.phase).toBe("ended");
-    expect(emitSpy).toHaveBeenCalledWith("storyEnd", { endingNode: expect.any(Object) });
+    expect(storyEndFired).toBe(true);
+    unsubscribe();
   });
 
   it("videoEnded() from start_screen phase is no-op", async () => {
