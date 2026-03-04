@@ -127,15 +127,13 @@ See [LICENSE](LICENSE) for full details.
 
 ## 🖼️ Screenshots
 
-*Screenshots coming soon - try the live demo!*
+Try the **[Live Demo](https://lealvona.github.io/CYOA-creator/)**!
 
 ## 🚦 Project Status
 
-> **Current Phase**: Branding, Documentation & Polish
+> **Status**: All 8 phases complete!
 
-- ✅ Phase 1: Branding system with 6 themes
-- ✅ Phase 2: Documentation restructure  
-- 🔄 Phase 3: Polish features (in progress)
+- ✅ Phase 1-8: All features implemented
 
 ## 🤝 Contributing
 
