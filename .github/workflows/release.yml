@@ -33,11 +33,109 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Get version
+        id: version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "VERSION=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Package web files
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          mkdir -p release/web
+          
+          # Copy all web files
+          cp -r dist/* release/web/
+          
+          # Create deployment README
+          cat > release/web/README.txt << 'ENDOFFILE'
+================================================================================
+CYOA-CREATOR WEB APPLICATION
+================================================================================
+
+VERSION: $VERSION
+
+REQUIREMENTS:
+- A web server (nginx, Apache, Caddy, GitHub Pages, Vercel, Netlify, etc.)
+- HTTPS recommended for production use
+
+DEPLOYMENT OPTIONS:
+
+1. GitHub Pages
+   - Go to your repository Settings > Pages
+   - Select "Deploy from a branch"
+   - Choose "main" and folder "/(root)"
+   - Upload these files to the root of your gh-pages branch
+
+2. Nginx
+   - Copy all files to /var/www/cyoa-creator/
+   - Configure nginx to serve SPA with try_files
+
+3. Apache
+   - Copy all files to /var/www/html/cyoa-creator/
+   - Ensure .htaccess is allowed
+
+4. Docker
+   - Create Dockerfile:
+     FROM nginx:alpine
+     COPY . /usr/share/nginx/html/
+   - Then: docker build -t cyoa-creator .
+
+5. Vercel / Netlify
+   - Drag and drop the web folder to deploy
+
+Note: This is a client-side SPA. No server-side processing required.
+All data is stored in browser localStorage.
+================================================================================
+ENDOFFILE
+          
+          cp release/web/README.txt release/web/README.md
+          
+          # Create deploy script
+          cat > release/web/deploy.sh << 'ENDOFFILE'
+#!/bin/bash
+# CYOA-creator Web Deployment Script
+
+set -e
+
+TARGET="${1:-/var/www/cyoa-creator}"
+echo "Deploying CYOA-creator to $TARGET"
+
+if [ "$EUID" -eq 0 ]; then
+    echo "Running as root - deploying to $TARGET"
+    mkdir -p "$TARGET"
+    cp -r . "$TARGET/"
+    echo "Deployed successfully!"
+else
+    echo "Not running as root. Options:"
+    echo "  1. Run with sudo: sudo $0 $TARGET"
+    echo "  2. Use Docker: docker run -v \$(pwd):/usr/share/nginx/html nginx:alpine"
+    exit 1
+fi
+ENDOFFILE
+          chmod +x release/web/deploy.sh
+          
+          # Create .htaccess for Apache SPA support
+          cat > release/web/.htaccess << 'ENDOFFILE'
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.html$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]
+ENDOFFILE
+
+      - name: Create ZIP archive
+        working-directory: release
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          zip -r "CYOA-creator-web-${VERSION}.zip" web/
+
       - name: Upload web artifact
         uses: actions/upload-artifact@v4
         with:
-          name: web-build
-          path: dist/
+          name: CYOA-creator-web
+          path: release/CYOA-creator-web-*.zip
           retention-days: 5
 
   build-android:
@@ -57,17 +155,30 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Get version
+        id: version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="${TAG#v}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Build Android APK
         working-directory: android-creator
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug
 
+      - name: Rename APK
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          APK=$(ls android-creator/app/build/outputs/apk/debug/*.apk | head -1)
+          cp "$APK" "CYOA-creator-android-${VERSION}.apk"
+
       - name: Upload Android artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk
-          path: android-creator/app/build/outputs/apk/debug/*.apk
+          name: CYOA-creator-android-apk
+          path: CYOA-creator-android-*.apk
           retention-days: 5
 
   release:
@@ -83,14 +194,14 @@ jobs:
       - name: Download web artifact
         uses: actions/download-artifact@v4
         with:
-          name: web-build
-          path: web
+          name: CYOA-creator-web
+          path: .
 
       - name: Download Android artifact
         uses: actions/download-artifact@v4
         with:
-          name: android-apk
-          path: android
+          name: CYOA-creator-android-apk
+          path: .
 
       - name: Get tag
         id: get_tag
@@ -99,9 +210,7 @@ jobs:
       - name: Generate release notes
         run: |
           if [ -f "CHANGELOG.md" ]; then
-            # Extract changelog for this version
             TAG="${{ steps.get_tag.outputs.TAG }}"
-            # Simple changelog - just use recent commits since last tag
             echo "## What's Changed" > release-notes.md
             git log --oneline -20 >> release-notes.md
           else
@@ -114,11 +223,8 @@ jobs:
         with:
           body_path: release-notes.md
           files: |
-            web/*.html
-            web/*.css
-            web/*.js
-            web/assets/*
-            android/*.apk
+            CYOA-creator-web-*.zip
+            CYOA-creator-android-*.apk
           draft: false
           prerelease: ${{ contains(steps.get_tag.outputs.TAG, '-') }}
         env:
