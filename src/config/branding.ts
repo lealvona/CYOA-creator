@@ -155,7 +155,7 @@ export const defaultBrandConfig: BrandConfig = {
     lineHeight: 1.5,
   },
   assets: {
-    logo: '/branding/logo.svg',
+    logo: 'branding/logo.svg',
     favicon: '/branding/favicon.ico',
     appIcon: '/branding/app-icon.png',
     heroBackground: '/branding/hero-bg.svg',
@@ -216,10 +216,10 @@ export const ucscTheme: BrandConfig = {
     lineHeight: 1.5,
   },
   assets: {
-    logo: '/branding/logo.svg',
-    favicon: '/branding/favicon.ico',
-    appIcon: '/branding/app-icon.png',
-    heroBackground: '/branding/hero-bg-ucsc.svg',
+    logo: 'branding/logo.svg',
+    favicon: 'branding/favicon.ico',
+    appIcon: 'branding/app-icon.png',
+    heroBackground: 'branding/hero-bg.svg',
   },
   meta: {
     appName: 'Interactive Story Engine',
@@ -277,7 +277,7 @@ export const classicTheme: BrandConfig = {
     lineHeight: 1.5,
   },
   assets: {
-    logo: '/branding/logo.svg',
+    logo: 'branding/logo.svg',
     favicon: '/branding/favicon.ico',
     appIcon: '/branding/app-icon.png',
     heroBackground: '/branding/hero-bg.svg',
@@ -338,7 +338,7 @@ export const highContrastTheme: BrandConfig = {
     lineHeight: 1.6,
   },
   assets: {
-    logo: '/branding/logo.svg',
+    logo: 'branding/logo.svg',
     favicon: '/branding/favicon.ico',
     appIcon: '/branding/app-icon.png',
     heroBackground: '/branding/hero-bg.svg',
@@ -399,7 +399,7 @@ export const warmTheme: BrandConfig = {
     lineHeight: 1.5,
   },
   assets: {
-    logo: '/branding/logo.svg',
+    logo: 'branding/logo.svg',
     favicon: '/branding/favicon.ico',
     appIcon: '/branding/app-icon.png',
     heroBackground: '/branding/hero-bg-warm.svg',
@@ -460,7 +460,7 @@ export const coolTheme: BrandConfig = {
     lineHeight: 1.5,
   },
   assets: {
-    logo: '/branding/logo.svg',
+    logo: 'branding/logo.svg',
     favicon: '/branding/favicon.ico',
     appIcon: '/branding/app-icon.png',
     heroBackground: '/branding/hero-bg-cool.svg',
@@ -522,7 +522,7 @@ export const educationalBrandConfig: BrandConfig = {
     lineHeight: 1.6,
   },
   assets: {
-    logo: '/branding/institution-logo.svg',
+    logo: 'branding/institution-logo.svg',
     favicon: '/branding/institution-favicon.ico',
     appIcon: '/branding/institution-app-icon.png',
     heroBackground: '/branding/institution-hero-bg.jpg',

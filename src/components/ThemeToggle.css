@@ -80,62 +80,32 @@
 .theme-toggle-menu {
   position: absolute;
   top: 100%;
-  /* Position from the right, but allow overflow protection */
-  right: 0;
+  left: 0;
+  right: auto;
   margin-top: 0.5rem;
   background: var(--brand-surface);
   border: 1px solid var(--brand-border);
   border-radius: 12px;
   padding: 0.75rem;
-  min-width: 260px;
-  max-width: min(320px, calc(100vw - 2rem));
+  min-width: 220px;
+  max-width: calc(100vw - 2rem);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
   z-index: 1000;
   opacity: 0;
   visibility: hidden;
   transform: translateY(-10px);
   transition: all 0.2s ease;
-  /* Ensure dropdown stays on screen */
   max-height: calc(100vh - 100px);
   overflow-y: auto;
-  /* Prevent horizontal overflow */
   overflow-x: hidden;
 }
 
-/* When dropdown is near right edge, position from right side */
-.theme-toggle-dropdown {
-  position: relative;
-  display: inline-block;
-}
-
-/* If the dropdown would overflow viewport, position it from the right edge */
-.theme-toggle-dropdown:has(.theme-toggle-menu:hover),
-.theme-toggle-dropdown:focus-within {
-  position: static;
-}
-
-.theme-toggle-dropdown:focus-within .theme-toggle-menu,
-.theme-toggle-dropdown:hover .theme-toggle-menu {
-  right: 0;
-  /* Ensure it's never too far right */
-  max-width: calc(100vw - 1rem);
-  left: auto;
-}
-
-/* For mobile/smaller screens, ensure visibility */
+/* For mobile/smaller screens or when near right edge */
 @media (max-width: 768px) {
   .theme-toggle-menu {
-    right: 0.5rem;
     left: auto;
-    min-width: 220px;
-    max-width: calc(100vw - 1rem);
+    right: 0;
   }
-}
-
-/* Ensure text doesn't overflow */
-.theme-toggle-menu * {
-  overflow-wrap: break-word;
-  word-wrap: break-word;
 }
 
 /* Ensure text doesn't overflow */
