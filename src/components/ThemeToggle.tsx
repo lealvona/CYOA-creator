@@ -1,6 +1,7 @@
 import { type FC } from 'react';
 import { useTheme } from '../hooks/useTheme';
 import type { ThemeMode } from '../contexts/ThemeContext';
+import type { BrandConfig } from '../config/branding';
 import './ThemeToggle.css';
 
 export interface ThemeToggleProps {
@@ -27,6 +28,68 @@ const ThemeIcon: FC<{ isDark: boolean }> = ({ isDark }) => (
     </svg>
   )
 );
+
+// Theme preview badge with primary and secondary colors
+const ThemePreviewBadge: FC<{ theme: BrandConfig; isDark: boolean }> = ({ theme, isDark }) => {
+  const colors = isDark ? theme.colors.dark : theme.colors.light;
+  return (
+    <div 
+      className="theme-color-preview"
+      style={{ 
+        background: `linear-gradient(135deg, ${colors.primary} 50%, ${colors.secondary} 50%)`,
+      }}
+    />
+  );
+};
+
+// Theme icon based on theme type
+const ThemeTypeIcon: FC<{ themeId: string }> = ({ themeId }) => {
+  const icons: Record<string, React.ReactNode> = {
+    default: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
+      </svg>
+    ),
+    ucsc: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+        <path d="M2 17l10 5 10-5" />
+        <path d="M2 12l10 5 10-5" />
+      </svg>
+    ),
+    classic: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <rect x="4" y="4" width="16" height="16" rx="2" />
+        <path d="M8 12h8M12 8v8" />
+      </svg>
+    ),
+    'high-contrast': (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 3v18" />
+      </svg>
+    ),
+    warm: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <circle cx="12" cy="12" r="5" />
+        <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+      </svg>
+    ),
+    cool: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <circle cx="12" cy="12" r="5" />
+        <path d="M12 8V4M8 12H4M12 16v4M16 12h4" />
+      </svg>
+    ),
+  };
+  
+  return (
+    <span className="theme-type-icon">
+      {icons[themeId] || icons.default}
+    </span>
+  );
+};
 
 export const ThemeToggle: FC<ThemeToggleProps> = ({ 
   variant = 'dropdown',
@@ -93,31 +156,30 @@ export const ThemeToggle: FC<ThemeToggleProps> = ({
       </button>
       
       <div className="theme-toggle-menu" role="listbox">
-        {isThemeSwitchingAllowed && (
-          <div className="theme-section">
-            <div className="theme-section-title">Theme</div>
-            {availableThemes.map(theme => (
-              <button
-                key={theme.id}
-                className={`theme-option ${theme.id === currentTheme.id ? 'active' : ''}`}
-                onClick={() => handleThemeChange(theme.id)}
-                role="option"
-                aria-selected={theme.id === currentTheme.id}
-              >
-                <span 
-                  className="theme-color-preview" 
-                  style={{ background: theme.colors.dark.primary }}
-                />
-                <span className="theme-name">{theme.name}</span>
-                {theme.id === currentTheme.id && (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
+          {isThemeSwitchingAllowed && (
+            <div className="theme-section">
+              <div className="theme-section-title">Theme</div>
+              {availableThemes.map(theme => (
+                <button
+                  key={theme.id}
+                  className={`theme-option ${theme.id === currentTheme.id ? 'active' : ''}`}
+                  onClick={() => handleThemeChange(theme.id)}
+                  role="option"
+                  aria-selected={theme.id === currentTheme.id}
+                  title={`Select ${theme.name} theme`}
+                >
+                  <ThemeTypeIcon themeId={theme.id} />
+                  <span className="theme-name">{theme.name}</span>
+                  <ThemePreviewBadge theme={theme} isDark={isDark} />
+                  {theme.id === currentTheme.id && (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
         
         {showModeSelector && isDarkModeEnabled && (
           <div className="theme-section">
