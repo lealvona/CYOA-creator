@@ -4,228 +4,76 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
 
 jobs:
   build-web:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Unit tests
-        run: npm run test -- --run
-
-      - name: Build
-        run: npm run build
-
-      - name: Get version
-        id: version
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          echo "VERSION=$TAG" >> $GITHUB_OUTPUT
-
-      - name: Package web files
-        run: |
-          VERSION="${{ steps.version.outputs.VERSION }}"
-          mkdir -p release/web
-          
-          # Copy all web files
-          cp -r dist/* release/web/
-          
-          # Create deployment README
-          cat > release/web/README.txt << 'ENDOFFILE'
-================================================================================
-CYOA-CREATOR WEB APPLICATION
-================================================================================
-
-VERSION: $VERSION
-
-REQUIREMENTS:
-- A web server (nginx, Apache, Caddy, GitHub Pages, Vercel, Netlify, etc.)
-- HTTPS recommended for production use
-
-DEPLOYMENT OPTIONS:
-
-1. GitHub Pages
-   - Go to your repository Settings > Pages
-   - Select "Deploy from a branch"
-   - Choose "main" and folder "/(root)"
-   - Upload these files to the root of your gh-pages branch
-
-2. Nginx
-   - Copy all files to /var/www/cyoa-creator/
-   - Configure nginx to serve SPA with try_files
-
-3. Apache
-   - Copy all files to /var/www/html/cyoa-creator/
-   - Ensure .htaccess is allowed
-
-4. Docker
-   - Create Dockerfile:
-     FROM nginx:alpine
-     COPY . /usr/share/nginx/html/
-   - Then: docker build -t cyoa-creator .
-
-5. Vercel / Netlify
-   - Drag and drop the web folder to deploy
-
-Note: This is a client-side SPA. No server-side processing required.
-All data is stored in browser localStorage.
-================================================================================
-ENDOFFILE
-          
-          cp release/web/README.txt release/web/README.md
-          
-          # Create deploy script
-          cat > release/web/deploy.sh << 'ENDOFFILE'
-#!/bin/bash
-# CYOA-creator Web Deployment Script
-
-set -e
-
-TARGET="${1:-/var/www/cyoa-creator}"
-echo "Deploying CYOA-creator to $TARGET"
-
-if [ "$EUID" -eq 0 ]; then
-    echo "Running as root - deploying to $TARGET"
-    mkdir -p "$TARGET"
-    cp -r . "$TARGET/"
-    echo "Deployed successfully!"
-else
-    echo "Not running as root. Options:"
-    echo "  1. Run with sudo: sudo $0 $TARGET"
-    echo "  2. Use Docker: docker run -v \$(pwd):/usr/share/nginx/html nginx:alpine"
-    exit 1
-fi
-ENDOFFILE
-          chmod +x release/web/deploy.sh
-          
-          # Create .htaccess for Apache SPA support
-          cat > release/web/.htaccess << 'ENDOFFILE'
-RewriteEngine On
-RewriteBase /
-RewriteRule ^index\.html$ - [L]
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.html [L]
-ENDOFFILE
-
-      - name: Create ZIP archive
-        working-directory: release
-        run: |
-          VERSION="${{ steps.version.outputs.VERSION }}"
-          zip -r "CYOA-creator-web-${VERSION}.zip" web/
-
-      - name: Upload web artifact
-        uses: actions/upload-artifact@v4
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test -- --run
+      - run: npm run build
+        env:
+          GITHUB_PAGES: true
+      - run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          mkdir -p release
+          cd dist
+          zip -r ../release/CYOA-creator-web-${VERSION}.zip .
+      - uses: actions/upload-artifact@v4
         with:
-          name: CYOA-creator-web
+          name: web-artifact
           path: release/CYOA-creator-web-*.zip
-          retention-days: 5
 
   build-android:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Get version
-        id: version
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          VERSION="${TAG#v}"
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Build Android APK
-        working-directory: android-creator
-        run: |
+      - uses: android-actions/setup-android@v3
+      - run: |
+          cd android-creator
           chmod +x gradlew
           ./gradlew assembleDebug
-
-      - name: Rename APK
-        run: |
-          VERSION="${{ steps.version.outputs.VERSION }}"
-          APK=$(ls android-creator/app/build/outputs/apk/debug/*.apk | head -1)
-          cp "$APK" "CYOA-creator-android-${VERSION}.apk"
-
-      - name: Upload Android artifact
-        uses: actions/upload-artifact@v4
+      - run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          VERSION="${VERSION#v}"
+          cp android-creator/app/build/outputs/apk/debug/*.apk CYOA-creator-android-${VERSION}.apk
+      - uses: actions/upload-artifact@v4
         with:
-          name: CYOA-creator-android-apk
+          name: android-artifact
           path: CYOA-creator-android-*.apk
-          retention-days: 5
 
   release:
     needs: [build-web, build-android]
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download web artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
         with:
-          name: CYOA-creator-web
           path: .
-
-      - name: Download Android artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: CYOA-creator-android-apk
-          path: .
-
-      - name: Get tag
+      - run: |
+          echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
         id: get_tag
-        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-
-      - name: Generate release notes
-        run: |
-          if [ -f "CHANGELOG.md" ]; then
-            TAG="${{ steps.get_tag.outputs.TAG }}"
-            echo "## What's Changed" > release-notes.md
-            git log --oneline -20 >> release-notes.md
-          else
-            echo "## What's Changed" > release-notes.md
-            git log --oneline -20 >> release-notes.md
-          fi
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - run: |
+          echo "## What's Changed" > release-notes.md
+          git log --oneline -10 >> release-notes.md
+      - uses: softprops/action-gh-release@v2
         with:
           body_path: release-notes.md
           files: |
-            CYOA-creator-web-*.zip
-            CYOA-creator-android-*.apk
+            *.zip
+            *.apk
           draft: false
-          prerelease: ${{ contains(steps.get_tag.outputs.TAG, '-') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
