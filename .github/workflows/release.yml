@@ -24,7 +24,7 @@ jobs:
       - name: Prepare release
         run: |
           VERSION="${GITHUB_REF#refs/tags/}"
-          mkdir -p release
+          mkdir -p release/web
           cp -r dist/* release/web/
           mkdir -p release/web/docs
           cp docs/*.md release/web/docs/ 2>/dev/null || true
