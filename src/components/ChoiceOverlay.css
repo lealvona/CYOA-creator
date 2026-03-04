@@ -154,3 +154,47 @@
     font-size: 0.8rem;
   }
 }
+
+/* ---- Inline variant (for during-video choices) ---- */
+
+.choice-overlay--inline {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.choice-overlay--inline .choice-overlay__content {
+  position: absolute;
+  bottom: 70px;
+  max-width: 600px;
+  width: 90%;
+  gap: 0.5rem;
+}
+
+.choice-overlay--inline .choice-overlay__buttons {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.choice-overlay--inline .choice-overlay__btn {
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  pointer-events: auto;
+}
+
+.choice-overlay--inline .choice-overlay__btn:hover:not(:disabled) {
+  background: rgba(78, 205, 196, 0.35);
+}
+
+.choice-overlay--inline .choice-overlay__btn-index {
+  width: 24px;
+  height: 24px;
+  font-size: 0.75rem;
+}

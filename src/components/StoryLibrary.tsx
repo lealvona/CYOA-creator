@@ -1,24 +1,9 @@
-import { useEffect, useMemo, useState, type FC } from "react";
+import { useEffect, useState, type FC } from "react";
 import type { StoryCatalogItem } from "../types/library";
-import { fetchStoryCatalog, importStoryZipWithProgress } from "../utils/storyApi";
+import { fetchAllStories, importStoryZipWithProgress } from "../utils/storyApi";
 import { ThemeToggle } from "./ThemeToggle";
 import { useTheme } from "../hooks/useTheme";
 import "./StoryLibrary.css";
-
-const FALLBACK_SAMPLE: StoryCatalogItem = {
-  id: "sample",
-  storyUrl: "/stories/sample/story.json",
-  importedAt: new Date().toISOString(),
-  completeness: "complete",
-  meta: {
-    title: "The Forgotten Lab",
-    description: "Sample branching story bundled with the app.",
-    author: "Interactive PPD Team",
-    version: "1.0.0",
-    estimatedMinutes: 5,
-    tags: ["sample"],
-  },
-};
 
 export interface StoryLibraryProps {
   onOpenStory: (story: StoryCatalogItem) => void;
@@ -32,17 +17,12 @@ export const StoryLibrary: FC<StoryLibraryProps> = ({ onOpenStory }) => {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const { currentTheme, isThemeSwitchingAllowed, isDarkModeEnabled } = useTheme();
 
-  const hasSample = useMemo(
-    () => stories.some((story) => story.storyUrl === FALLBACK_SAMPLE.storyUrl),
-    [stories]
-  );
-
   const loadStories = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const catalog = await fetchStoryCatalog();
-      setStories(catalog);
+      const allStories = await fetchAllStories();
+      setStories(allStories);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to fetch story catalog";
       setError(message);
@@ -56,7 +36,7 @@ export const StoryLibrary: FC<StoryLibraryProps> = ({ onOpenStory }) => {
     void loadStories();
   }, []);
 
-  const visibleStories = hasSample ? stories : [FALLBACK_SAMPLE, ...stories];
+  const visibleStories = stories;
 
   return (
     <main className="story-library">

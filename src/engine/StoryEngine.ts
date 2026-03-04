@@ -51,6 +51,7 @@ export interface StoryProgressSnapshot {
   flags: string[];
   phase: PlaybackPhase;
   timestamp: number;
+  schemaVersion?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -113,7 +114,8 @@ export class StoryEngine {
 
   get storyKey(): string {
     if (!this._meta) return "";
-    return `${this._meta.title}::${this._meta.version}`;
+    const key = this._meta.id ?? this._meta.title;
+    return `${key}::${this._meta.version}`;
   }
 
   // ---------- Event Emitter ----------
@@ -363,6 +365,7 @@ export class StoryEngine {
       flags: Array.from(this._state.flags),
       phase: this._state.phase,
       timestamp: Date.now(),
+      schemaVersion: 1,
     };
   }
 

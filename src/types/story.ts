@@ -112,6 +112,9 @@ export interface StoryNode {
 
 /** Metadata about the story for display and cataloging. */
 export interface StoryMeta {
+  /** Optional unique identifier for this story. */
+  id?: string;
+
   /** Display title of the story. */
   title: string;
 

@@ -69,7 +69,20 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Reduced motion preference */
+/* Screen reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -77,5 +90,21 @@ html {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .choice-overlay__btn {
+    border: 2px solid #fff;
+    background: #000;
+  }
+
+  .video-player__controls {
+    background: #000;
+  }
+
+  .choice-overlay__backdrop {
+    background: rgba(0, 0, 0, 0.9);
   }
 }

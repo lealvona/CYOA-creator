@@ -5,7 +5,7 @@
  * Animates in with a staggered fade. Each button triggers engine.choose().
  */
 
-import { type FC, useState } from "react";
+import { type FC, useState, useRef, useEffect } from "react";
 import type { Choice } from "../types/story";
 import "./ChoiceOverlay.css";
 
@@ -18,14 +18,23 @@ export interface ChoiceOverlayProps {
 
   /** Optional prompt text above the choices. */
   prompt?: string;
+
+  /** Display variant - modal (full screen) or inline (for during-video). Default: modal */
+  variant?: "modal" | "inline";
 }
 
 export const ChoiceOverlay: FC<ChoiceOverlayProps> = ({
   choices,
   onChoose,
   prompt = "What do you do?",
+  variant = "modal",
 }) => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const firstButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    firstButtonRef.current?.focus();
+  }, []);
 
   const handleClick = (choiceId: string) => {
     if (selectedId) return; // Prevent double-click
@@ -39,16 +48,23 @@ export const ChoiceOverlay: FC<ChoiceOverlayProps> = ({
   };
 
   return (
-    <div className="choice-overlay" role="dialog" aria-label="Make a choice">
-      <div className="choice-overlay__backdrop" />
+    <div
+      className={`choice-overlay choice-overlay--${variant}`}
+      role="dialog"
+      aria-label="Make a choice"
+    >
+      {variant === "modal" && <div className="choice-overlay__backdrop" />}
 
       <div className="choice-overlay__content">
-        <p className="choice-overlay__prompt">{prompt}</p>
+        {variant === "modal" && (
+          <p className="choice-overlay__prompt">{prompt}</p>
+        )}
 
         <div className="choice-overlay__buttons">
           {choices.map((choice, index) => (
             <button
               key={choice.id}
+              ref={index === 0 ? firstButtonRef : undefined}
               className={`choice-overlay__btn ${
                 selectedId === choice.id ? "choice-overlay__btn--selected" : ""
               } ${selectedId && selectedId !== choice.id ? "choice-overlay__btn--dimmed" : ""}`}

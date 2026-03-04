@@ -41,21 +41,25 @@
       "type": "video",
       "videoFile": "hallway.webm",
       "subtitle": "A long corridor stretches ahead, dimly lit by emergency lights.",
+      "choiceTiming": "during_video",
       "choices": [
         {
           "id": "hallway_left",
           "label": "Go left toward the storage room",
-          "targetNodeId": "storage"
+          "targetNodeId": "storage",
+          "showAtTime": 2
         },
         {
           "id": "hallway_right",
           "label": "Go right toward the exit sign",
-          "targetNodeId": "exit_attempt"
+          "targetNodeId": "exit_attempt",
+          "showAtTime": 2
         },
         {
           "id": "hallway_back",
           "label": "Go back to the lab room",
-          "targetNodeId": "terminal"
+          "targetNodeId": "terminal",
+          "showAtTime": 2
         }
       ]
     },

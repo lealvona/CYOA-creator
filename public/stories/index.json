@@ -1,0 +1,9 @@
+{
+  "stories": [
+    {
+      "id": "sample",
+      "storyUrl": "/stories/sample/story.json",
+      "completeness": "complete"
+    }
+  ]
+}

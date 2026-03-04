@@ -5,7 +5,7 @@
  * "Begin" button to start playback.
  */
 
-import type { FC } from "react";
+import { type FC, useRef, useEffect } from "react";
 import type { StoryMeta } from "../types/story";
 import "./StartScreen.css";
 
@@ -29,6 +29,12 @@ export const StartScreen: FC<StartScreenProps> = ({
   onResume,
   canResume = false,
 }) => {
+  const beginButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    beginButtonRef.current?.focus();
+  }, []);
+
   return (
     <div className="start-screen">
       <div className="start-screen__content">
@@ -60,7 +66,11 @@ export const StartScreen: FC<StartScreenProps> = ({
         )}
 
         <div className="start-screen__actions">
-          <button className="start-screen__begin" onClick={onStart}>
+          <button
+            ref={beginButtonRef}
+            className="start-screen__begin"
+            onClick={onStart}
+          >
             Begin Story
           </button>
           {canResume && onResume && (

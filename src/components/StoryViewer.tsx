@@ -81,6 +81,25 @@ export const StoryViewer: FC<StoryViewerProps> = ({
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
 
+  const announceText = useMemo(() => {
+    switch (state.phase) {
+      case "start_screen":
+        return meta ? `Story loaded: ${meta.title}. Press Begin to start.` : "";
+      case "playing":
+        return state.currentNode ? `Now playing: ${state.currentNode.title}` : "";
+      case "choosing":
+        return `Make a choice. ${availableChoices.length} options available.`;
+      case "ended":
+        return state.currentNode
+          ? `Story complete: ${state.currentNode.title}`
+          : "Story complete.";
+      case "error":
+        return `Error: ${state.error || "An unknown error occurred."}`;
+      default:
+        return "";
+    }
+  }, [state.phase, state.currentNode, state.error, meta, availableChoices.length]);
+
   const storyStorageKey = useMemo(
     () => getProgressStorageKey(storyUrl, engine.storyKey),
     [storyUrl, engine.storyKey]
@@ -124,28 +143,40 @@ export const StoryViewer: FC<StoryViewerProps> = ({
 
   const savedSnapshot = useMemo<StoryProgressSnapshot | null>(() => {
     if (state.phase !== "start_screen") return null;
-    const raw = localStorage.getItem(storyStorageKey);
-    if (!raw) return null;
-
     try {
+      const raw = localStorage.getItem(storyStorageKey);
+      if (!raw) return null;
+
       const parsed = JSON.parse(raw) as StoryProgressSnapshot;
       return parsed.currentNodeId ? parsed : null;
     } catch {
-      localStorage.removeItem(storyStorageKey);
+      try {
+        localStorage.removeItem(storyStorageKey);
+      } catch {
+        // ignore
+      }
       return null;
     }
   }, [state.phase, storyStorageKey]);
 
   useEffect(() => {
-    if (state.phase === "playing") {
+    if (state.phase === "playing" || state.phase === "choosing") {
       const snapshot = engine.createProgressSnapshot();
       if (snapshot) {
-        localStorage.setItem(storyStorageKey, JSON.stringify(snapshot));
+        try {
+          localStorage.setItem(storyStorageKey, JSON.stringify(snapshot));
+        } catch (e) {
+          console.warn("[StoryViewer] Failed to save progress:", e);
+        }
       }
     }
 
     if (state.phase === "ended") {
-      localStorage.removeItem(storyStorageKey);
+      try {
+        localStorage.removeItem(storyStorageKey);
+      } catch (e) {
+        console.warn("[StoryViewer] Failed to clear progress:", e);
+      }
     }
   }, [engine, state.phase, storyStorageKey]);
 
@@ -166,6 +197,9 @@ export const StoryViewer: FC<StoryViewerProps> = ({
   if (state.phase === "loading") {
     return (
       <div className="story-viewer story-viewer--loading">
+        <div aria-live="polite" className="sr-only">
+          {announceText}
+        </div>
         <div className="story-viewer__loader">
           <div className="story-viewer__spinner" />
           <p>Loading story...</p>
@@ -177,6 +211,9 @@ export const StoryViewer: FC<StoryViewerProps> = ({
   if (state.phase === "error") {
     return (
       <div className="story-viewer story-viewer--error">
+        <div aria-live="polite" className="sr-only">
+          {announceText}
+        </div>
         <div className="story-viewer__error-box">
           <h2>Something went wrong</h2>
           <p>{state.error || "Unknown error"}</p>
@@ -189,6 +226,9 @@ export const StoryViewer: FC<StoryViewerProps> = ({
   if (state.phase === "start_screen" && meta) {
     return (
       <div className="story-viewer">
+        <div aria-live="polite" className="sr-only">
+          {announceText}
+        </div>
         <StartScreen
           meta={meta}
           onStart={start}
@@ -214,6 +254,9 @@ export const StoryViewer: FC<StoryViewerProps> = ({
         }`}
         data-theme={state.currentNode.theme}
       >
+        <div aria-live="polite" className="sr-only">
+          {announceText}
+        </div>
         <div className="story-viewer__node-title">{state.currentNode.title}</div>
 
         {config?.allowRevisit && state.history.length > 1 && (
@@ -257,7 +300,11 @@ export const StoryViewer: FC<StoryViewerProps> = ({
         />
 
         {shouldShowChoiceOverlay && (
-          <ChoiceOverlay choices={visibleChoices} onChoose={choose} />
+          <ChoiceOverlay
+            choices={visibleChoices}
+            onChoose={choose}
+            variant={state.phase === "choosing" ? "modal" : "inline"}
+          />
         )}
       </div>
     );
@@ -266,6 +313,9 @@ export const StoryViewer: FC<StoryViewerProps> = ({
   if (state.phase === "ended" && state.currentNode) {
     return (
       <div className="story-viewer">
+        <div aria-live="polite" className="sr-only">
+          {announceText}
+        </div>
         <EndScreen
           endingNode={state.currentNode}
           history={state.history}
