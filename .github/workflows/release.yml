@@ -41,7 +41,7 @@ jobs:
           echo '@echo off' > release/web/deploy.bat
           echo 'set TARGET=C:\inetpub\wwwroot\cyoa' >> release/web/deploy.bat
           echo 'mkdir "%TARGET%" 2>nul' >> release/web/deploy.bat
-          echo 'xcopy /E /Y * "%TARGET%\"' >> release/web/deploy.bat
+          echo 'xcopy /E /Y * "%TARGET%\\"' >> release/web/deploy.bat
 
           # Add configs
           echo "RewriteEngine On" > release/web/.htaccess
@@ -87,6 +87,7 @@ ENDREADME
 
   build-android:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -114,32 +115,40 @@ ENDREADME
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
         with:
-          path: .
-          pattern: web-artifact
-          merge-multiple: false
-      - uses: actions/download-artifact@v4
+          fetch-depth: 0
+      - name: Download web artifact
+        uses: actions/download-artifact@v4
         with:
-          path: .
-          pattern: android-artifact
-          merge-multiple: false
-      - run: |
-          find . -name "*.zip" -exec mv {} . \;
-          find . -name "*.apk" -exec mv {} . \;
-        name: organize files
-      - run: |
-          echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-        id: get_tag
-      - run: |
+          name: web-artifact
+          path: artifacts
+      - name: Download android artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-artifact
+          path: artifacts
+        continue-on-error: true
+      - name: Organize files
+        run: |
+          mkdir -p release
+          find artifacts -name "*.zip" -exec cp {} release/ \;
+          find artifacts -name "*.apk" -exec cp {} release/ \; 2>/dev/null || true
+          ls -la release/
+      - name: Generate changelog
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
           echo "## What's Changed" > release-notes.md
-          git log --oneline -10 >> release-notes.md
-      - uses: softprops/action-gh-release@v2
+          echo "" >> release-notes.md
+          git log --oneline -15 >> release-notes.md
+          echo "" >> release-notes.md
+          echo "---" >> release-notes.md
+          echo "" >> release-notes.md
+          echo "Live Demo: https://lealvona.github.io/CYOA-creator/" >> release-notes.md
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
         with:
           body_path: release-notes.md
-          files: |
-            CYOA-creator-web-*.zip
-            CYOA-creator-android-*.apk
+          files: release/*
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
