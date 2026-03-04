@@ -23,6 +23,17 @@
   <img src="https://img.shields.io/badge/Kotlin-1.9-7F52FF?logo=kotlin" alt="Kotlin">
 </p>
 
+<p align="center">
+  <a href="https://lealvona.github.io/CYOA-creator/"><img src="https://img.shields.io/badge/Live_Demo-View_Now-brightgreen?style=for-the-badge" alt="Live Demo"></a>
+  <a href="https://github.com/lealvona/CYOA-creator/releases/latest"><img src="https://img.shields.io/github/v/release/lealvona/CYOA-creator?style=for-the-badge&label=Download" alt="Latest Release"></a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/actions/workflow/status/lealvona/CYOA-creator/ci.yml?branch=master&label=CI" alt="CI Status">
+  <img src="https://img.shields.io/github/actions/workflow/status/lealvona/CYOA-creator/pages.yml?branch=master&label=Pages" alt="Pages Status">
+  <img src="https://img.shields.io/github/license/lealvona/CYOA-creator" alt="License">
+</p>
+
 ---
 
 ## ✨ What is it?
@@ -67,25 +78,40 @@ Optional: **ffmpeg** for generating placeholder videos
 
 ## 🎯 Features
 
-### Story Creation
+### Core Story Engine
 - ✨ **Branching narratives** - Create complex story trees with multiple paths
-- 🎬 **Video playback** - HTML5 video with smooth transitions
+- 🎬 **Video playback** - HTML5 video with smooth fade/crossfade transitions
 - 🏷️ **Conditional logic** - Flag-based branching for replayability
 - 💾 **Progress persistence** - Auto-save and resume anywhere
 - 📦 **ZIP import/export** - Share stories as portable packages
+- 🔙 **Go back** - Allow users to revisit previous choices (optional)
 
-### Playback Experience  
-- 🎨 **6 built-in themes** - Including UCSC/PPD with official colors
-- 🌓 **Dark/Light/System modes** - Automatic theme switching
-- ⌨️ **Keyboard shortcuts** - Full keyboard navigation
-- ♿ **Accessibility** - Screen reader support, ARIA labels
-- 📱 **Mobile responsive** - Works on all devices
+### Theming & Customization  
+- 🎨 **6 built-in themes** - Default, UCSC/PPD, Classic, High Contrast, Warm, Cool
+- 🌓 **Dark/Light/System modes** - Automatic theme switching with system preference
+- 🎭 **Per-theme assets** - Custom logos, colors, and hero backgrounds
+- 🔒 **Theme locking** - Lock themes for institutional branding
+- ♿ **High contrast** - Accessible theme with maximum color differentiation
 
-### Creator Tools
-- 🤖 **Android app** - Record and edit on mobile
-- 📝 **Markdown support** - Write stories in markdown
-- 🤖 **LLM integration** - AI-assisted story conversion
-- 🎥 **In-app recording** - CameraX video capture
+### Playback Experience
+- ⌨️ **Keyboard shortcuts** - Full keyboard navigation (?, ESC, arrows)
+- ♿ **Accessibility** - Screen reader support, ARIA live regions, focus management
+- 📱 **Mobile responsive** - Touch gestures (swipe to go back), responsive layouts
+- 🎯 **Timed choices** - Show choices during video, on end, or on pause
+- 🔊 **Volume control** - Per-story default volume settings
+
+### Developer Features
+- 🧪 **57 unit tests** - Comprehensive test coverage
+- 📊 **Analytics dashboard** - View completion rates and choice statistics
+- 🔄 **Story library** - Browse and manage multiple stories
+- 🛠️ **Validation tools** - CLI tools to validate story JSON
+- 🚀 **CI/CD** - Automated testing, releases, and GitHub Pages deployment
+
+### Mobile App (Android)
+- 🤖 **Native Android app** - Record and edit stories on mobile
+- 🎥 **CameraX integration** - In-app video recording
+- 📝 **Story editor** - Create and edit stories on the go
+- 📤 **Export to web** - Upload stories to the web platform
 
 ## 🛠️ Tech Stack
 
@@ -125,9 +151,21 @@ This project is **dual-licensed** for educational institutions.
 
 See [LICENSE](LICENSE) for full details.
 
-## 🖼️ Screenshots
+## 🖼️ Live Demo & Screenshots
 
-Try the **[Live Demo](https://lealvona.github.io/CYOA-creator/)**!
+**[Try the Live Demo →](https://lealvona.github.io/CYOA-creator/)**
+
+The demo includes a sample interactive story you can play immediately.
+
+### Key Features Showcase
+
+| Feature | Description |
+|---------|-------------|
+| 🖼️ **Branching Narratives** | Watch video scenes and make choices that shape the story |
+| 🎨 **6 Themes** | Choose from Default, UCSC/PPD, Classic, High Contrast, Warm, and Cool themes |
+| 📊 **Analytics** | View completion stats and choice analytics for each story |
+| 💾 **Save/Resume** | Progress is automatically saved and can be resumed later |
+| 📱 **Mobile Support** | Works on all devices with touch gestures and responsive design |
 
 ## 🚦 Project Status
 

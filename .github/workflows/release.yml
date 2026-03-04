@@ -24,59 +24,26 @@ jobs:
       - name: Prepare release
         run: |
           VERSION="${GITHUB_REF#refs/tags/}"
-          mkdir -p release
+          mkdir -p release/web
           cp -r dist/* release/web/
-          
-          # Add docs
           mkdir -p release/web/docs
           cp docs/*.md release/web/docs/ 2>/dev/null || true
-
-          # Add deploy scripts
           echo '#!/bin/bash' > release/web/deploy.sh
           echo 'TARGET="${1:-/var/www/cyoa}"' >> release/web/deploy.sh
           echo 'sudo mkdir -p "$TARGET" && sudo cp -r . "$TARGET/"' >> release/web/deploy.sh
           chmod +x release/web/deploy.sh
-
-          # Add PowerShell script
           echo '@echo off' > release/web/deploy.bat
           echo 'set TARGET=C:\inetpub\wwwroot\cyoa' >> release/web/deploy.bat
           echo 'mkdir "%TARGET%" 2>nul' >> release/web/deploy.bat
-          echo 'xcopy /E /Y * "%TARGET%\"' >> release/web/deploy.bat
-
-          # Add configs
+          echo 'xcopy /E /Y * "%TARGET%\\"' >> release/web/deploy.bat
           echo "RewriteEngine On" > release/web/.htaccess
-          echo "RewriteBase /" >> release/web/.htaccess  
+          echo "RewriteBase /" >> release/web/.htaccess
           echo "RewriteRule ^index.html$ - [L]" >> release/web/.htaccess
           echo "RewriteCond %{REQUEST_FILENAME} !-f" >> release/web/.htaccess
           echo "RewriteCond %{REQUEST_FILENAME} !-d" >> release/web/.htaccess
           echo "RewriteRule . /index.html [L]" >> release/web/.htaccess
-
-          # Create README
-          cat > release/web/README.md << 'ENDREADME'
-# CYOA-creator Web
-
-Version: $VERSION
-
-## Quick Start
-Extract and open index.html, or deploy to web server.
-
-## Deployment
-- Linux: sudo ./deploy.sh
-- Windows: Run deploy.bat as Admin
-- Docker: docker-compose up -d
-- IIS: Use web.config
-
-## Features
-- Video stories with choices
-- Save/resume (localStorage)
-- Themes
-- Analytics
-
-## Privacy
-All data stored in browser. No server storage.
-ENDREADME
-          cp release/web/README.md release/web/README.txt
-
+          echo "CYOA-creator Web" > release/web/README.txt
+          echo "Version: $VERSION" >> release/web/README.txt
           cd release
           zip -r CYOA-creator-web-${VERSION}.zip web/
 
@@ -97,7 +64,7 @@ ENDREADME
       - run: |
           cd android-creator
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
       - run: |
           VERSION="${GITHUB_REF#refs/tags/}"
           VERSION="${VERSION#v}"
@@ -106,6 +73,7 @@ ENDREADME
         with:
           name: android-artifact
           path: CYOA-creator-android-*.apk
+          if-no-files-found: error
 
   release:
     needs: [build-web, build-android]
@@ -114,32 +82,30 @@ ENDREADME
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/download-artifact@v4
         with:
-          path: .
-          pattern: web-artifact
-          merge-multiple: false
+          name: web-artifact
+          path: artifacts
       - uses: actions/download-artifact@v4
         with:
-          path: .
-          pattern: android-artifact
-          merge-multiple: false
+          name: android-artifact
+          path: artifacts
       - run: |
-          find . -name "*.zip" -exec mv {} . \;
-          find . -name "*.apk" -exec mv {} . \;
-        name: organize files
-      - run: |
-          echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-        id: get_tag
+          mkdir -p release
+          find artifacts -name "*.zip" -exec cp {} release/ \;
+          find artifacts -name "*.apk" -exec cp {} release/ \;
+          ls -la release/
       - run: |
           echo "## What's Changed" > release-notes.md
-          git log --oneline -10 >> release-notes.md
+          echo "" >> release-notes.md
+          git log --oneline -15 >> release-notes.md
+          echo "" >> release-notes.md
+          echo "Live Demo: https://lealvona.github.io/CYOA-creator/" >> release-notes.md
       - uses: softprops/action-gh-release@v2
         with:
           body_path: release-notes.md
-          files: |
-            CYOA-creator-web-*.zip
-            CYOA-creator-android-*.apk
-          draft: false
+          files: release/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
