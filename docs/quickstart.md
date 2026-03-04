@@ -26,8 +26,8 @@ sudo apt install ffmpeg
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/lealvona/PPD-example.git
-cd PPD-example
+git clone https://github.com/lealvona/CYOA-creator.git
+cd CYOA-creator
 ```
 
 ### 2. Install Dependencies

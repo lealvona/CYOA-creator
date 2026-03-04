@@ -6,6 +6,7 @@
  *  - Memoized action callbacks (start, choose, restart, goBack, videoEnded)
  *  - Auto-load story from URL on mount
  *  - Preloading of next videos
+ *  - Analytics tracking
  */
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
@@ -17,6 +18,7 @@ import type {
   StoryConfig,
   Choice,
 } from "../types/story";
+import { analyticsCollector } from "../utils/analyticsCollector";
 
 export interface UseStoryEngineOptions {
   /** URL to the story JSON file (relative to public root). */
@@ -82,6 +84,37 @@ export function useStoryEngine(
       setState({ ...engine.state });
     });
     return unsubscribe;
+  }, [engine]);
+
+  // Track analytics events
+  useEffect(() => {
+    const startedAt = Date.now();
+    const path: string[] = [];
+
+    const unsubNodeEnter = engine.on("nodeEnter", (event) => {
+      path.push((event.payload as { node: { id: string } }).node.id);
+    });
+
+    const unsubChoiceMade = engine.on("choiceMade", (event) => {
+      const choice = event.payload as { nodeId: string; choiceId: string };
+      analyticsCollector.recordChoice(engine.storyKey, choice.nodeId, choice.choiceId);
+    });
+
+    const unsubStoryEnd = engine.on("storyEnd", (event) => {
+      const endingNodeId = (event.payload as { endingNode: { id: string } }).endingNode.id;
+      analyticsCollector.recordPlaythrough(
+        engine.storyKey,
+        path,
+        endingNodeId,
+        startedAt
+      );
+    });
+
+    return () => {
+      unsubNodeEnter();
+      unsubChoiceMade();
+      unsubStoryEnd();
+    };
   }, [engine]);
 
   // Load story on mount (or when storyUrl changes)

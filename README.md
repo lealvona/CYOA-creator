@@ -45,8 +45,8 @@ Get up and running in 3 simple steps:
 
 ```bash
 # 1. Clone and install
-git clone https://github.com/lealvona/PPD-example.git
-cd PPD-example
+git clone https://github.com/lealvona/CYOA-creator.git
+cd CYOA-creator
 npm install
 
 # 2. Start the app
@@ -161,5 +161,5 @@ Dual-licensed. See [LICENSE](LICENSE) file for details.
 </p>
 
 <p align="center">
-  <a href="https://github.com/lealvona/PPD-example">⭐ Star this repo</a> if you find it helpful!
+  <a href="https://github.com/lealvona/CYOA-creator">⭐ Star this repo</a> if you find it helpful!
 </p>

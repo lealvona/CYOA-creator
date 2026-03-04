@@ -338,6 +338,7 @@ export const StoryViewer: FC<StoryViewerProps> = ({
           endingNode={state.currentNode}
           history={state.history}
           totalNodes={engine.totalNodes}
+          storyKey={engine.storyKey}
           onRestart={handleRestart}
         />
       </div>
