@@ -1,4 +1,4 @@
-import { type FC, useEffect, useMemo, useState } from "react";
+import { type FC, useEffect, useMemo, useState, useRef } from "react";
 import type { Choice, StoryNode } from "../types/story";
 import {
   type StoryProgressSnapshot,
@@ -80,6 +80,22 @@ export const StoryViewer: FC<StoryViewerProps> = ({
   const [playbackTime, setPlaybackTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+
+  // Touch gesture handling for swipe back
+  const touchStartX = useRef<number | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    
+    // Right swipe (deltaX > 80px) triggers goBack if allowed
+    if (deltaX > 80 && config?.allowRevisit && state.history.length > 1) {
+      goBack();
+    }
+  };
 
   const announceText = useMemo(() => {
     switch (state.phase) {
@@ -253,6 +269,8 @@ export const StoryViewer: FC<StoryViewerProps> = ({
           state.phase === "transitioning" ? "story-viewer--transitioning" : ""
         }`}
         data-theme={state.currentNode.theme}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         <div aria-live="polite" className="sr-only">
           {announceText}

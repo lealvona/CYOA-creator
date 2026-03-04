@@ -40,6 +40,9 @@ export interface VideoPlayerProps {
 
   /** Callback when video fails to load/play. */
   onPlaybackError?: () => void;
+
+  /** Callback when fullscreen state changes. */
+  onFullscreenChange?: (isFullscreen: boolean) => void;
 }
 
 export const VideoPlayer: FC<VideoPlayerProps> = ({
@@ -52,13 +55,18 @@ export const VideoPlayer: FC<VideoPlayerProps> = ({
   autoPlay = true,
   onPlaybackStateChange,
   onPlaybackError,
+  onFullscreenChange,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const controlsTimeoutRef = useRef<number | undefined>(undefined);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Set volume
   useEffect(() => {
@@ -124,8 +132,53 @@ export const VideoPlayer: FC<VideoPlayerProps> = ({
     setIsMuted(video.muted);
   }, []);
 
+  // Fullscreen toggle
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen().catch(console.error);
+    } else {
+      document.exitFullscreen().catch(console.error);
+    }
+  }, []);
+
+  // Handle fullscreen change
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const fullscreen = !!document.fullscreenElement;
+      setIsFullscreen(fullscreen);
+      onFullscreenChange?.(fullscreen);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, [onFullscreenChange]);
+
+  // Auto-hide controls after 3 seconds of inactivity
+  const showControls = useCallback(() => {
+    setControlsVisible(true);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    controlsTimeoutRef.current = window.setTimeout(() => {
+      if (isPlaying) {
+        setControlsVisible(false);
+      }
+    }, 3000);
+  }, [isPlaying]);
+
+  // Tap to toggle controls visibility
+  const handlePlayerClick = useCallback(() => {
+    if (!isFullscreen) return;
+    setControlsVisible((prev) => !prev);
+    showControls();
+  }, [isFullscreen, showControls]);
+
   return (
-    <div className="video-player" data-node-id={node.id}>
+    <div
+      ref={containerRef}
+      className={`video-player ${controlsVisible ? "video-player--controls-visible" : ""}`}
+      data-node-id={node.id}
+      onClick={handlePlayerClick}
+    >
       {/* Preload links for upcoming videos */}
       {preloadUrls.map((url) => (
         <link key={url} rel="preload" as="video" href={url} />
@@ -201,6 +254,14 @@ export const VideoPlayer: FC<VideoPlayerProps> = ({
           aria-label={isMuted ? "Unmute" : "Mute"}
         >
           {isMuted ? "\uD83D\uDD07" : "\uD83D\uDD0A"}
+        </button>
+
+        <button
+          className="video-player__btn"
+          onClick={toggleFullscreen}
+          aria-label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+        >
+          {isFullscreen ? "\u2716" : "\u26F6"}
         </button>
       </div>
     </div>

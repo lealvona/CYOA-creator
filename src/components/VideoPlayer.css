@@ -161,3 +161,30 @@
   border-radius: 2px;
   transition: width 0.1s linear;
 }
+
+/* ----- Touch-friendly sizing ----- */
+
+@media (pointer: coarse) {
+  .video-player__btn {
+    width: 48px;
+    height: 48px;
+    font-size: 1.5rem;
+  }
+
+  .video-player__progress-track {
+    height: 8px;
+  }
+}
+
+/* ----- Controls visibility ----- */
+
+.video-player:not(.video-player--controls-visible) .video-player__controls {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  .video-player:hover .video-player__controls {
+    opacity: 1;
+  }
+}

@@ -198,3 +198,19 @@
   height: 24px;
   font-size: 0.75rem;
 }
+
+/* ---- Touch-friendly sizing ---- */
+
+@media (pointer: coarse) {
+  .choice-overlay__btn {
+    min-height: 48px;
+    padding: 0.875rem 1.25rem;
+    font-size: 1.1rem;
+  }
+
+  .choice-overlay__btn-index {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+}
