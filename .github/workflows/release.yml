@@ -21,27 +21,13 @@ jobs:
         env:
           GITHUB_PAGES: "true"
 
-      - name: Prepare release
+      - name: Prepare web release
         run: |
           VERSION="${GITHUB_REF#refs/tags/}"
           mkdir -p release/web
           cp -r dist/* release/web/
           mkdir -p release/web/docs
           cp docs/*.md release/web/docs/ 2>/dev/null || true
-          echo '#!/bin/bash' > release/web/deploy.sh
-          echo 'TARGET="${1:-/var/www/cyoa}"' >> release/web/deploy.sh
-          echo 'sudo mkdir -p "$TARGET" && sudo cp -r . "$TARGET/"' >> release/web/deploy.sh
-          chmod +x release/web/deploy.sh
-          echo '@echo off' > release/web/deploy.bat
-          echo 'set TARGET=C:\inetpub\wwwroot\cyoa' >> release/web/deploy.bat
-          echo 'mkdir "%TARGET%" 2>nul' >> release/web/deploy.bat
-          echo 'xcopy /E /Y * "%TARGET%\\"' >> release/web/deploy.bat
-          echo "RewriteEngine On" > release/web/.htaccess
-          echo "RewriteBase /" >> release/web/.htaccess
-          echo "RewriteRule ^index.html$ - [L]" >> release/web/.htaccess
-          echo "RewriteCond %{REQUEST_FILENAME} !-f" >> release/web/.htaccess
-          echo "RewriteCond %{REQUEST_FILENAME} !-d" >> release/web/.htaccess
-          echo "RewriteRule . /index.html [L]" >> release/web/.htaccess
           echo "CYOA-creator Web" > release/web/README.txt
           echo "Version: $VERSION" >> release/web/README.txt
           cd release
@@ -61,22 +47,77 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: android-actions/setup-android@v3
-      - run: |
+      - name: Build Android APK
+        run: |
           cd android-creator
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
-      - run: |
+      - name: Rename APK with version
+        run: |
           VERSION="${GITHUB_REF#refs/tags/}"
           VERSION="${VERSION#v}"
-          cp android-creator/app/build/outputs/apk/debug/*.apk CYOA-creator-android-${VERSION}.apk
+          cp android-creator/app/build/outputs/apk/debug/app-debug.apk "CYOA-Creator-v${VERSION}.apk"
+          ls -lh *.apk
       - uses: actions/upload-artifact@v4
         with:
           name: android-artifact
-          path: CYOA-creator-android-*.apk
+          path: CYOA-Creator-*.apk
+          if-no-files-found: error
+
+  build-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Prepare server package
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          VERSION="${VERSION#v}"
+          mkdir -p "CYOA-Creator-Server-${VERSION}"
+          
+          # Copy server files
+          cp -r server/ "CYOA-Creator-Server-${VERSION}/"
+          cp package.json "CYOA-Creator-Server-${VERSION}/"
+          cp package-lock.json "CYOA-Creator-Server-${VERSION}/" 2>/dev/null || true
+          
+          # Copy docs
+          mkdir -p "CYOA-Creator-Server-${VERSION}/docs"
+          cp docs/*.md "CYOA-Creator-Server-${VERSION}/docs/" 2>/dev/null || true
+          
+          # Copy setup scripts
+          cp deployment/setup.sh "CYOA-Creator-Server-${VERSION}/"
+          cp deployment/setup.bat "CYOA-Creator-Server-${VERSION}/"
+          cp deployment/README.txt "CYOA-Creator-Server-${VERSION}/"
+          
+          # Create data directories
+          mkdir -p "CYOA-Creator-Server-${VERSION}/data/stories"
+          mkdir -p "CYOA-Creator-Server-${VERSION}/data/tmp"
+          
+          # Create .gitkeep files
+          touch "CYOA-Creator-Server-${VERSION}/data/stories/.gitkeep"
+          touch "CYOA-Creator-Server-${VERSION}/data/tmp/.gitkeep"
+          
+          # Create the zip
+          zip -r "CYOA-Creator-Server-${VERSION}.zip" "CYOA-Creator-Server-${VERSION}/"
+          
+          # List contents
+          echo "=== Server Package Contents ==="
+          ls -lah "CYOA-Creator-Server-${VERSION}/"
+          echo ""
+          echo "=== Zip File ==="
+          ls -lh "CYOA-Creator-Server-${VERSION}.zip"
+          
+      - uses: actions/upload-artifact@v4
+        with:
+          name: server-artifact
+          path: CYOA-Creator-Server-*.zip
           if-no-files-found: error
 
   release:
-    needs: [build-web, build-android]
+    needs: [build-web, build-android, build-server]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -92,20 +133,72 @@ jobs:
         with:
           name: android-artifact
           path: artifacts
-      - run: |
+      - uses: actions/download-artifact@v4
+        with:
+          name: server-artifact
+          path: artifacts
+      - name: Prepare release files
+        run: |
           mkdir -p release
-          find artifacts -name "*.zip" -exec cp {} release/ \;
-          find artifacts -name "*.apk" -exec cp {} release/ \;
-          ls -la release/
-      - run: |
-          echo "## What's Changed" > release-notes.md
-          echo "" >> release-notes.md
-          git log --oneline -15 >> release-notes.md
-          echo "" >> release-notes.md
-          echo "Live Demo: https://lealvona.github.io/CYOA-creator/" >> release-notes.md
+          find artifacts -type f -name "*.zip" -exec cp {} release/ \;
+          find artifacts -type f -name "*.apk" -exec cp {} release/ \;
+          echo "=== Release Files ==="
+          ls -lh release/
+      - name: Generate release notes
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          cat > release-notes.md << EOF
+          ## CYOA Creator ${VERSION}
+
+          ### 📦 Downloads
+
+          **Android App**
+          - <code>CYOA-Creator-*.apk</code> - Install on Android device
+          - Requires Android 8.0+ (API 26+)
+          - Features: Record video, manage projects, export ZIP files
+
+          **Server Package**
+          - <code>CYOA-Creator-Server-*.zip</code> - Complete backend server
+          - Includes interactive setup scripts for Windows, macOS, and Linux
+          - Run \`setup.sh\` (Mac/Linux) or \`setup.bat\` (Windows) to get started
+
+          **Web Package**
+          - <code>CYOA-creator-web-*.zip</code> - Static web frontend
+          - Deploy to any static web hosting (GitHub Pages, Netlify, etc.)
+
+          ### 🚀 Quick Start
+
+          1. **Install the Android app** on your phone
+          2. **Run the server** on your computer:
+             - Extract the server zip
+             - Run \`setup.sh\` (Mac/Linux) or \`setup.bat\` (Windows)
+             - The script will guide you through setup
+          3. **Connect**: Make sure phone and computer are on the same WiFi
+          4. **Create**: Use the app to create and record stories
+          5. **Import**: Upload stories via the web interface or API
+
+          ### 📖 Documentation
+
+          - [Quick Start Guide](https://github.com/lealvona/CYOA-creator/blob/master/docs/quickstart.md)
+          - [Story Format](https://github.com/lealvona/CYOA-creator/blob/master/docs/story-format.md)
+          - [API Documentation](https://github.com/lealvona/CYOA-creator/blob/master/docs/api.md)
+
+          ### 🌐 Live Demo
+
+          Try the web interface: https://lealvona.github.io/CYOA-creator/
+          
+          **Note**: The live demo shows the UI but requires a local server for uploads.
+
+          ### 🆕 What's Changed
+
+          EOF
+          git log --oneline -20 >> release-notes.md
+          
       - uses: softprops/action-gh-release@v2
         with:
           body_path: release-notes.md
           files: release/*
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
