@@ -9,7 +9,10 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 class PackageExporter(private val context: Context) {
-  private val json = Json { prettyPrint = true }
+  private val json = Json { 
+    prettyPrint = true
+    encodeDefaults = true
+  }
 
   @kotlinx.serialization.Serializable
   private data class PackageManifest(

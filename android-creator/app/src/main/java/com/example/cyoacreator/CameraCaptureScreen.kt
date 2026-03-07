@@ -52,6 +52,8 @@ import java.io.File
 @Composable
 fun CameraCaptureScreen(
   expectedVideoFile: String,
+  initialLensFacing: Int,
+  onLensFacingChanged: (Int) -> Unit,
   onDone: (Uri) -> Unit,
   onCancel: () -> Unit
 ) {
@@ -67,7 +69,7 @@ fun CameraCaptureScreen(
 
   var recording by remember { mutableStateOf<Recording?>(null) }
   var status by remember { mutableStateOf("Ready to record") }
-  var lensFacing by remember { mutableStateOf(CameraSelector.LENS_FACING_BACK) }
+  var lensFacing by remember { mutableStateOf(initialLensFacing) }
   var hasFrontCamera by remember { mutableStateOf(false) }
   var hasBackCamera by remember { mutableStateOf(true) }
 
@@ -193,12 +195,14 @@ fun CameraCaptureScreen(
             FilledTonalButton(
               enabled = canFlip && recording == null,
               onClick = {
-                lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) {
+                val newLensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) {
                   CameraSelector.LENS_FACING_FRONT
                 } else {
                   CameraSelector.LENS_FACING_BACK
                 }
-                status = if (lensFacing == CameraSelector.LENS_FACING_FRONT) {
+                lensFacing = newLensFacing
+                onLensFacingChanged(newLensFacing)
+                status = if (newLensFacing == CameraSelector.LENS_FACING_FRONT) {
                   "Front camera active"
                 } else {
                   "Back camera active"
