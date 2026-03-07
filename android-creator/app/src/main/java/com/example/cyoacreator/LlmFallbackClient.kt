@@ -1,8 +1,12 @@
 package com.example.cyoacreator
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
+import kotlinx.serialization.json.putJsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -41,27 +45,35 @@ class LlmFallbackClient(
       $rawText
     """.trimIndent()
 
-    val payload = mapOf(
-      "model" to config.model,
-      "messages" to listOf(
-        mapOf("role" to "system", "content" to "You output valid JSON only."),
-        mapOf("role" to "user", "content" to prompt)
-      ),
-      "temperature" to 0.1
-    )
+    val payload = buildJsonObject {
+      put("model", config.model)
+      putJsonArray("messages") {
+        add(buildJsonObject {
+          put("role", "system")
+          put("content", "You output valid JSON only.")
+        })
+        add(buildJsonObject {
+          put("role", "user")
+          put("content", prompt)
+        })
+      }
+      put("temperature", 0.1)
+    }
 
     val request = Request.Builder()
       .url(config.baseUrl.trimEnd('/') + "/v1/chat/completions")
       .addHeader("Authorization", "Bearer ${config.apiKey}")
       .addHeader("Content-Type", "application/json")
-      .post(json.encodeToString(payload).toRequestBody("application/json".toMediaType()))
+      .post(payload.toString().toRequestBody("application/json".toMediaType()))
       .build()
 
     val response = http.newCall(request).execute()
-    if (!response.isSuccessful) {
-      throw IllegalStateException("LLM request failed: ${response.code}")
-    }
     val body = response.body?.string().orEmpty()
+    if (!response.isSuccessful) {
+      val detail = body.take(220).ifBlank { response.message }
+      throw IllegalStateException("LLM request failed (${response.code}): $detail")
+    }
+
     val root = json.parseToJsonElement(body).jsonObject
     val choices = root["choices"]?.jsonArray ?: JsonArray(emptyList())
     val content = choices.firstOrNull()

@@ -1,8 +1,11 @@
 package com.example.cyoacreator
 
 import android.Manifest
+import android.net.Uri
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.MediaController
+import android.widget.VideoView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -38,18 +41,23 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +66,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.compose.ui.viewinterop.AndroidView
 
 private enum class NodeFilter {
   ALL,
@@ -71,8 +80,19 @@ class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContent {
-      MaterialTheme {
-        CreatorApp(vm)
+      var darkMode by rememberSaveable { mutableStateOf(false) }
+      MaterialTheme(
+        colorScheme = if (darkMode) {
+          darkColorScheme()
+        } else {
+          lightColorScheme()
+        }
+      ) {
+        CreatorApp(
+          vm = vm,
+          darkMode = darkMode,
+          onToggleDarkMode = { darkMode = !darkMode },
+        )
       }
     }
   }
@@ -80,7 +100,11 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CreatorApp(vm: MainViewModel) {
+private fun CreatorApp(
+  vm: MainViewModel,
+  darkMode: Boolean,
+  onToggleDarkMode: () -> Unit,
+) {
   val ui by vm.uiState.collectAsState()
   val context = LocalContext.current
   val snackbarHost = remember { SnackbarHostState() }
@@ -89,6 +113,7 @@ private fun CreatorApp(vm: MainViewModel) {
   var captureVideoFile by remember { mutableStateOf<String?>(null) }
   var pendingCaptureVideoFile by remember { mutableStateOf<String?>(null) }
   var importConflictStrategy by remember { mutableStateOf(ImportConflictStrategy.MERGE) }
+  var previewAssetUri by remember { mutableStateOf<Uri?>(null) }
 
   val pickMedia = rememberLauncherForActivityResult(
     contract = ActivityResultContracts.GetContent()
@@ -160,6 +185,21 @@ private fun CreatorApp(vm: MainViewModel) {
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
           )
+        },
+        actions = {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+          ) {
+            Text(
+              text = if (darkMode) "Dark" else "Light",
+              style = MaterialTheme.typography.labelMedium,
+            )
+            Switch(
+              checked = darkMode,
+              onCheckedChange = { onToggleDarkMode() },
+            )
+          }
         }
       )
     },
@@ -214,11 +254,21 @@ private fun CreatorApp(vm: MainViewModel) {
           createExportDocument.launch(name)
         },
         onDeleteNode = vm::deleteNode,
+        onPreviewAsset = { clipUri ->
+          previewAssetUri = clipUri
+        },
         onDeleteProject = {
           vm.deleteProject(ui.selectedProject!!)
         },
       )
     }
+  }
+
+  if (previewAssetUri != null) {
+    AssetPreviewDialog(
+      uri = previewAssetUri!!,
+      onDismiss = { previewAssetUri = null },
+    )
   }
 }
 
@@ -542,6 +592,7 @@ private fun ProjectWorkspace(
   onRemoveClip: (videoFile: String) -> Unit,
   onExport: () -> Unit,
   onDeleteNode: (String) -> Unit,
+  onPreviewAsset: (Uri) -> Unit,
   onDeleteProject: () -> Unit,
 ) {
   val progress = computeProjectProgress(project)
@@ -716,6 +767,9 @@ private fun ProjectWorkspace(
               Text("Attach")
             }
             if (clip != null) {
+              TextButton(onClick = { onPreviewAsset(Uri.parse(clip.uri)) }) {
+                Text("Preview")
+              }
               TextButton(onClick = { onRemoveClip(node.videoFile) }) {
                 Text("Remove")
               }
@@ -799,4 +853,48 @@ private fun ProjectWorkspace(
       }
     )
   }
+}
+
+@Composable
+private fun AssetPreviewDialog(
+  uri: Uri,
+  onDismiss: () -> Unit,
+) {
+  AlertDialog(
+    onDismissRequest = onDismiss,
+    title = { Text("Preview Asset") },
+    text = {
+      VideoPreviewSurface(uri = uri)
+    },
+    confirmButton = {
+      TextButton(onClick = onDismiss) {
+        Text("Close")
+      }
+    },
+  )
+}
+
+@Composable
+private fun VideoPreviewSurface(uri: Uri) {
+  AndroidView(
+    modifier = Modifier
+      .fillMaxWidth()
+      .heightIn(min = 220.dp),
+    factory = { context ->
+      VideoView(context).apply {
+        val controller = MediaController(context)
+        controller.setAnchorView(this)
+        setMediaController(controller)
+        setVideoURI(uri)
+        setOnPreparedListener { mp ->
+          mp.isLooping = true
+          start()
+        }
+      }
+    },
+    update = { view ->
+      view.setVideoURI(uri)
+      view.start()
+    },
+  )
 }
