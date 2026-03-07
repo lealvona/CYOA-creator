@@ -53,6 +53,31 @@ async function writeEntry(zipfile, entry, outputPath) {
   });
 }
 
+async function processEntry(zipfile, entry, storyDir, state) {
+  state.entryCount += 1;
+  if (state.entryCount > LIMITS.maxEntries) {
+    throw new Error("Zip rejected: too many files");
+  }
+
+  state.expandedBytes += Number(entry.uncompressedSize || 0);
+  if (state.expandedBytes > LIMITS.maxExpandedBytes) {
+    throw new Error("Zip rejected: uncompressed size exceeds limit");
+  }
+
+  const normalizedPath = normalizeEntryPath(entry.fileName);
+  if (!isAllowedEntry(normalizedPath)) {
+    throw new Error(`Unexpected file in package: ${normalizedPath}`);
+  }
+
+  if (/\/$/.test(entry.fileName)) {
+    await fsp.mkdir(path.join(storyDir, normalizedPath), { recursive: true });
+    return;
+  }
+
+  const outputPath = path.join(storyDir, normalizedPath);
+  await writeEntry(zipfile, entry, outputPath);
+}
+
 export async function importZipPackage(zipPath) {
   await fsp.mkdir(STORIES_DIR, { recursive: true });
 
@@ -60,8 +85,7 @@ export async function importZipPackage(zipPath) {
   const storyDir = path.join(STORIES_DIR, storyId);
   await fsp.mkdir(storyDir, { recursive: true });
 
-  let entryCount = 0;
-  let expandedBytes = 0;
+  const state = { entryCount: 0, expandedBytes: 0 };
 
   await new Promise((resolve, reject) => {
     yauzl.open(zipPath, { lazyEntries: true }, (openErr, zipfile) => {
@@ -70,44 +94,27 @@ export async function importZipPackage(zipPath) {
         return;
       }
 
-      zipfile.readEntry();
-
-      zipfile.on("entry", async (entry) => {
+      const processNext = () => {
         try {
-          entryCount += 1;
-          if (entryCount > LIMITS.maxEntries) {
-            throw new Error("Zip rejected: too many files");
-          }
-
-          expandedBytes += Number(entry.uncompressedSize || 0);
-          if (expandedBytes > LIMITS.maxExpandedBytes) {
-            throw new Error("Zip rejected: uncompressed size exceeds limit");
-          }
-
-          const normalizedPath = normalizeEntryPath(entry.fileName);
-          if (!isAllowedEntry(normalizedPath)) {
-            throw new Error(`Unexpected file in package: ${normalizedPath}`);
-          }
-
-          if (/\/$/.test(entry.fileName)) {
-            await fsp.mkdir(path.join(storyDir, normalizedPath), {
-              recursive: true,
-            });
-            zipfile.readEntry();
-            return;
-          }
-
-          const outputPath = path.join(storyDir, normalizedPath);
-          await writeEntry(zipfile, entry, outputPath);
           zipfile.readEntry();
         } catch (err) {
           zipfile.close();
           reject(err);
         }
+      };
+
+      zipfile.on("entry", (entry) => {
+        processEntry(zipfile, entry, storyDir, state)
+          .then(() => processNext())
+          .catch((err) => {
+            zipfile.close();
+            reject(err);
+          });
       });
 
       zipfile.on("end", resolve);
       zipfile.on("error", reject);
+      processNext();
     });
   });
 
