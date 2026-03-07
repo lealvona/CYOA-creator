@@ -49,35 +49,94 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     llmConfig: LlmProviderConfig?
   ) {
     viewModelScope.launch {
-      val story = if (useLlm && llmConfig != null) {
+      val trimmedName = name.trim()
+      val trimmedText = text.trim()
+
+      if (trimmedName.isBlank()) {
+        setStatus("Project name is required.")
+        return@launch
+      }
+      if (trimmedText.isBlank()) {
+        setStatus("Story text is required.")
+        return@launch
+      }
+
+      _uiState.update { it.copy(isBusy = true, statusMessage = null) }
+
+      if (useLlm) {
+        val config = llmConfig?.copy(
+          baseUrl = llmConfig.baseUrl.trim(),
+          apiKey = llmConfig.apiKey.trim(),
+          model = llmConfig.model.trim(),
+        )
+        if (config == null || config.baseUrl.isBlank() || config.apiKey.isBlank() || config.model.isBlank()) {
+          _uiState.update {
+            it.copy(
+              isBusy = false,
+              statusMessage = "LLM is enabled, but Base URL, Model, and API key are all required.",
+            )
+          }
+          return@launch
+        }
+
         runCatching {
           withContext(Dispatchers.IO) {
-            LlmFallbackClient(llmConfig).convertRawTextToStory(text)
+            LlmFallbackClient(config).convertRawTextToStory(trimmedText)
           }
-        }.getOrElse {
-          setStatus("LLM conversion failed, falling back to markdown parser: ${it.message}")
-          StructuredMarkdownParser.parse(text)
+        }.onSuccess { story ->
+          val project = CreatorProject(
+            id = UUID.randomUUID().toString(),
+            name = trimmedName,
+            rawStoryText = trimmedText,
+            parseMode = ParseMode.LLM_FALLBACK,
+            story = story,
+            completeness = computeCompleteness(story, emptyList()),
+          )
+          repo.save(project)
+          _uiState.update {
+            it.copy(
+              isBusy = false,
+              selectedProject = project,
+              statusMessage = "Project created using LLM conversion.",
+            )
+          }
+        }.onFailure { err ->
+          _uiState.update {
+            it.copy(
+              isBusy = false,
+              statusMessage = "LLM conversion failed: ${err.message}. Project was not created.",
+            )
+          }
         }
-      } else {
-        StructuredMarkdownParser.parse(text)
+        return@launch
       }
-      val project = CreatorProject(
-        id = UUID.randomUUID().toString(),
-        name = name,
-        rawStoryText = text,
-        parseMode = if (useLlm) ParseMode.LLM_FALLBACK else ParseMode.STRUCTURED_MARKDOWN,
-        story = story,
-        completeness = computeCompleteness(story, emptyList()),
-      )
-      repo.save(project)
-      _uiState.update {
-        it.copy(
-          selectedProject = project,
-          statusMessage = if (useLlm)
-            "Project created. Configure LLM provider and run fallback conversion next."
-          else
-            "Project created from structured markdown.",
+
+      runCatching {
+        StructuredMarkdownParser.parse(trimmedText)
+      }.onSuccess { story ->
+        val project = CreatorProject(
+          id = UUID.randomUUID().toString(),
+          name = trimmedName,
+          rawStoryText = trimmedText,
+          parseMode = ParseMode.STRUCTURED_MARKDOWN,
+          story = story,
+          completeness = computeCompleteness(story, emptyList()),
         )
+        repo.save(project)
+        _uiState.update {
+          it.copy(
+            isBusy = false,
+            selectedProject = project,
+            statusMessage = "Project created from structured markdown.",
+          )
+        }
+      }.onFailure { err ->
+        _uiState.update {
+          it.copy(
+            isBusy = false,
+            statusMessage = "Could not parse story text: ${err.message}",
+          )
+        }
       }
     }
   }

@@ -11,6 +11,16 @@ import java.util.zip.ZipOutputStream
 class PackageExporter(private val context: Context) {
   private val json = Json { prettyPrint = true }
 
+  @kotlinx.serialization.Serializable
+  private data class PackageManifest(
+    val packageVersion: String,
+    val storyFile: String,
+    val videoDirectory: String,
+    val completeness: String,
+    val generatedAt: String,
+    val missingAssets: List<String>
+  )
+
   data class ExportFile(
     val name: String,
     val uri: Uri
@@ -31,13 +41,13 @@ class PackageExporter(private val context: Context) {
           .map { it.videoFile }
           .filter { expected -> videoFiles.none { it.name == expected } }
 
-        val manifest = mapOf(
-          "packageVersion" to "1.0",
-          "storyFile" to "story.json",
-          "videoDirectory" to "videos",
-          "completeness" to if (missingAssets.isEmpty()) "complete" else "incomplete",
-          "generatedAt" to System.currentTimeMillis().toString(),
-          "missingAssets" to missingAssets
+        val manifest = PackageManifest(
+          packageVersion = "1.0",
+          storyFile = "story.json",
+          videoDirectory = "videos",
+          completeness = if (missingAssets.isEmpty()) "complete" else "incomplete",
+          generatedAt = System.currentTimeMillis().toString(),
+          missingAssets = missingAssets,
         )
 
         zip.putNextEntry(ZipEntry("package.manifest.json"))
