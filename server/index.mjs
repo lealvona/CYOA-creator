@@ -38,9 +38,11 @@ app.post("/api/import", upload.single("package"), async (req, res) => {
   }
 
   const tempPath = path.resolve(req.file.path);
+  console.log(`Importing package: ${tempPath}, size: ${req.file.size} bytes`);
 
   try {
     const result = await importZipPackage(tempPath);
+    console.log(`Import successful: ${result.story.id}`);
     await addStoryToCatalog(result.story);
 
     res.status(201).json({
@@ -49,6 +51,7 @@ app.post("/api/import", upload.single("package"), async (req, res) => {
       warnings: result.warnings,
     });
   } catch (err) {
+    console.error(`Import failed:`, err);
     res.status(400).json({
       ok: false,
       error: err instanceof Error ? err.message : "Failed to import package",
@@ -56,6 +59,15 @@ app.post("/api/import", upload.single("package"), async (req, res) => {
   } finally {
     await fs.rm(tempPath, { force: true });
   }
+});
+
+// Error handling middleware
+app.use((err, _req, res, _next) => {
+  console.error("Server error:", err);
+  res.status(500).json({
+    ok: false,
+    error: err instanceof Error ? err.message : "Internal server error",
+  });
 });
 
 app.listen(PORT, () => {

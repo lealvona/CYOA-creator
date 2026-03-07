@@ -88,4 +88,58 @@ class LlmFallbackClient(
 
     return json.decodeFromString(StoryDefinition.serializer(), content)
   }
+
+  suspend fun generateTitle(rawText: String): String {
+    val prompt = """
+      Create a short, catchy title (2-5 words) for this story. Return only the title text, nothing else.
+      
+      STORY:
+      ${rawText.take(2000)}
+    """.trimIndent()
+
+    val payload = buildJsonObject {
+      put("model", config.model)
+      putJsonArray("messages") {
+        add(buildJsonObject {
+          put("role", "system")
+          put("content", "You output short titles only. No quotes, no explanation.")
+        })
+        add(buildJsonObject {
+          put("role", "user")
+          put("content", prompt)
+        })
+      }
+      put("temperature", 0.7)
+      put("max_tokens", 20)
+    }
+
+    val request = Request.Builder()
+      .url(config.baseUrl.trimEnd('/') + "/v1/chat/completions")
+      .addHeader("Authorization", "Bearer ${config.apiKey}")
+      .addHeader("Content-Type", "application/json")
+      .post(payload.toString().toRequestBody("application/json".toMediaType()))
+      .build()
+
+    val response = http.newCall(request).execute()
+    val body = response.body?.string().orEmpty()
+    if (!response.isSuccessful) {
+      throw IllegalStateException("Title generation failed: ${response.code}")
+    }
+
+    val root = json.parseToJsonElement(body).jsonObject
+    val choices = root["choices"]?.jsonArray ?: JsonArray(emptyList())
+    val content = choices.firstOrNull()
+      ?.jsonObject
+      ?.get("message")
+      ?.jsonObject
+      ?.get("content")
+      ?.jsonPrimitive
+      ?.content
+      ?.trim()
+      ?.removeSurrounding("\"")
+      ?.removeSurrounding("'")
+      ?: "Untitled Story"
+
+    return content.ifBlank { "Untitled Story" }
+  }
 }

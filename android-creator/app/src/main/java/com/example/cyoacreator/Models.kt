@@ -52,7 +52,9 @@ data class StoryMeta(
   val description: String,
   val author: String,
   val version: String,
-  val date: String
+  val date: String,
+  val estimatedMinutes: Int? = null,
+  val tags: List<String> = emptyList()
 )
 
 @Serializable

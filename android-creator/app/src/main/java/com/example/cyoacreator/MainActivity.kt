@@ -11,6 +11,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,16 +19,23 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,17 +49,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -67,6 +71,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.viewinterop.AndroidView
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 private enum class NodeFilter {
   ALL,
@@ -80,13 +86,14 @@ class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContent {
-      var darkMode by rememberSaveable { mutableStateOf(false) }
+      val context = LocalContext.current
+      val isSystemDark = context.resources.configuration.uiMode and
+        android.content.res.Configuration.UI_MODE_NIGHT_MASK ==
+        android.content.res.Configuration.UI_MODE_NIGHT_YES
+      var darkMode by rememberSaveable { mutableStateOf(isSystemDark) }
+
       MaterialTheme(
-        colorScheme = if (darkMode) {
-          darkColorScheme()
-        } else {
-          lightColorScheme()
-        }
+        colorScheme = if (darkMode) darkColorScheme() else lightColorScheme()
       ) {
         CreatorApp(
           vm = vm,
@@ -112,6 +119,7 @@ private fun CreatorApp(
   var pendingAttachVideoFile by remember { mutableStateOf<String?>(null) }
   var captureVideoFile by remember { mutableStateOf<String?>(null) }
   var pendingCaptureVideoFile by remember { mutableStateOf<String?>(null) }
+  var cameraLensFacing by remember { mutableStateOf(androidx.camera.core.CameraSelector.LENS_FACING_BACK) }
   var importConflictStrategy by remember { mutableStateOf(ImportConflictStrategy.MERGE) }
   var previewAssetUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -162,9 +170,35 @@ private fun CreatorApp(
     }
   }
 
+  // Handle creation step dialogs
+  when (val step = ui.creationStep) {
+    is CreationStep.Progress -> {
+      ProgressDialog(message = step.message)
+    }
+    is CreationStep.ReviewLlmResult -> {
+      LlmReviewDialog(
+        story = step.story,
+        name = step.name,
+        rawText = step.rawText,
+        onConfirm = { editedStory ->
+          vm.confirmLlmResult(step.rawText, step.story, step.name, editedStory)
+        },
+        onRedo = {
+          vm.createProject(step.name, step.rawText, true, step.config)
+        },
+        onCancel = {
+          vm.cancelCreation()
+        }
+      )
+    }
+    else -> {}
+  }
+
   if (captureVideoFile != null) {
     CameraCaptureScreen(
       expectedVideoFile = captureVideoFile!!,
+      initialLensFacing = cameraLensFacing,
+      onLensFacingChanged = { cameraLensFacing = it },
       onDone = { uri ->
         vm.attachClip(captureVideoFile!!, uri)
         captureVideoFile = null
@@ -190,14 +224,11 @@ private fun CreatorApp(
           Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.padding(end = 12.dp)
           ) {
             Text(
-              text = if (darkMode) "Dark" else "Light",
-              style = MaterialTheme.typography.labelMedium,
-            )
-            Switch(
-              checked = darkMode,
-              onCheckedChange = { onToggleDarkMode() },
+              text = if (darkMode) "🌙" else "☀️",
+              style = MaterialTheme.typography.titleMedium,
             )
           }
         }
@@ -270,6 +301,126 @@ private fun CreatorApp(
       onDismiss = { previewAssetUri = null },
     )
   }
+}
+
+@Composable
+private fun ProgressDialog(message: String) {
+  AlertDialog(
+    onDismissRequest = { },
+    properties = androidx.compose.ui.window.DialogProperties(
+      dismissOnBackPress = false,
+      dismissOnClickOutside = false
+    ),
+    title = { Text("Please Wait") },
+    text = {
+      Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.fillMaxWidth()
+      ) {
+        CircularProgressIndicator()
+        Text(message)
+      }
+    },
+    confirmButton = { }
+  )
+}
+
+@Composable
+private fun LlmReviewDialog(
+  story: StoryDefinition,
+  name: String,
+  rawText: String,
+  onConfirm: (StoryDefinition?) -> Unit,
+  onRedo: () -> Unit,
+  onCancel: () -> Unit
+) {
+  var showPreview by remember { mutableStateOf(false) }
+  var editedJson by remember { mutableStateOf(Json { prettyPrint = true; encodeDefaults = true }.encodeToString(story)) }
+  var hasEdits by remember { mutableStateOf(false) }
+  val jsonParser = remember { Json { prettyPrint = true; encodeDefaults = true; ignoreUnknownKeys = true } }
+
+  AlertDialog(
+    onDismissRequest = { },
+    properties = androidx.compose.ui.window.DialogProperties(
+      dismissOnBackPress = false,
+      dismissOnClickOutside = false,
+      usePlatformDefaultWidth = false
+    ),
+    title = { Text("LLM Conversion Complete") },
+    text = {
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .heightIn(max = 500.dp)
+      ) {
+        Text(
+          "Project: $name",
+          style = MaterialTheme.typography.titleSmall,
+          fontWeight = FontWeight.Bold
+        )
+        Text(
+          "Nodes: ${story.nodes.size}",
+          style = MaterialTheme.typography.bodySmall
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+          verticalAlignment = Alignment.CenterVertically,
+          horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+          Checkbox(
+            checked = showPreview,
+            onCheckedChange = { showPreview = it }
+          )
+          Text("Show and edit generated structure")
+        }
+
+        if (showPreview) {
+          Spacer(modifier = Modifier.height(8.dp))
+          OutlinedTextField(
+            value = editedJson,
+            onValueChange = {
+              editedJson = it
+              hasEdits = true
+            },
+            label = { Text("Story JSON (editable)") },
+            modifier = Modifier
+              .fillMaxWidth()
+              .heightIn(min = 200.dp, max = 300.dp),
+            singleLine = false
+          )
+        }
+      }
+    },
+    confirmButton = {
+      Button(onClick = {
+        if (hasEdits && showPreview) {
+          try {
+            val editedStory = jsonParser.decodeFromString<StoryDefinition>(editedJson)
+            onConfirm(editedStory)
+          } catch (e: Exception) {
+            // Invalid JSON, fall back to original
+            onConfirm(null)
+          }
+        } else {
+          onConfirm(null)
+        }
+      }) {
+        Text("OK")
+      }
+    },
+    dismissButton = {
+      Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        TextButton(onClick = onCancel) {
+          Text("Cancel")
+        }
+        FilledTonalButton(onClick = onRedo) {
+          Text("Redo")
+        }
+      }
+    }
+  )
 }
 
 @Composable
@@ -759,28 +910,45 @@ private fun ProjectWorkspace(
             )
           }
 
-          Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilledTonalButton(onClick = { onRecord(node.videoFile) }) {
-              Text(if (clip == null) "Record" else "Retake")
+          FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.fillMaxWidth()
+          ) {
+            FilledTonalButton(
+              onClick = { onRecord(node.videoFile) },
+              modifier = Modifier.height(36.dp)
+            ) {
+              Text(if (clip == null) "Record" else "Retake", style = MaterialTheme.typography.labelMedium)
             }
-            TextButton(onClick = { onAttach(node.videoFile) }) {
-              Text("Attach")
+            TextButton(
+              onClick = { onAttach(node.videoFile) },
+              modifier = Modifier.height(36.dp)
+            ) {
+              Text("Attach", style = MaterialTheme.typography.labelMedium)
             }
             if (clip != null) {
-              TextButton(onClick = { onPreviewAsset(Uri.parse(clip.uri)) }) {
-                Text("Preview")
+              TextButton(
+                onClick = { onPreviewAsset(Uri.parse(clip.uri)) },
+                modifier = Modifier.height(36.dp)
+              ) {
+                Text("Preview", style = MaterialTheme.typography.labelMedium)
               }
-              TextButton(onClick = { onRemoveClip(node.videoFile) }) {
-                Text("Remove")
+              TextButton(
+                onClick = { onRemoveClip(node.videoFile) },
+                modifier = Modifier.height(36.dp)
+              ) {
+                Text("Remove", style = MaterialTheme.typography.labelMedium)
               }
             }
             TextButton(
               onClick = { nodeToDelete = node.id },
               colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
                 contentColor = MaterialTheme.colorScheme.error
-              )
+              ),
+              modifier = Modifier.height(36.dp)
             ) {
-              Text("Delete Node")
+              Text("Delete", style = MaterialTheme.typography.labelMedium)
             }
           }
         }

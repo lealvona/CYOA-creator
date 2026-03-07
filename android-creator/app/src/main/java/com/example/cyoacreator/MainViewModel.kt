@@ -13,11 +13,23 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
+sealed class CreationStep {
+  data object Idle : CreationStep()
+  data class Progress(val message: String) : CreationStep()
+  data class ReviewLlmResult(
+    val rawText: String,
+    val story: StoryDefinition,
+    val name: String,
+    val config: LlmProviderConfig
+  ) : CreationStep()
+}
+
 data class MainUiState(
   val projects: List<CreatorProject> = emptyList(),
   val selectedProject: CreatorProject? = null,
   val statusMessage: String? = null,
   val isBusy: Boolean = false,
+  val creationStep: CreationStep = CreationStep.Idle,
 )
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
@@ -79,31 +91,42 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
           return@launch
         }
 
+        _uiState.update { it.copy(creationStep = CreationStep.Progress("Generating title...")) }
+
+        val needsTitle = trimmedName == "New Story" || trimmedName.isBlank()
+        val finalName = if (needsTitle) {
+          runCatching {
+            withContext(Dispatchers.IO) {
+              LlmFallbackClient(config).generateTitle(trimmedText)
+            }
+          }.getOrElse { trimmedName }
+        } else {
+          trimmedName
+        }
+
+        _uiState.update { it.copy(creationStep = CreationStep.Progress("Contacting LLM...")) }
+
         runCatching {
           withContext(Dispatchers.IO) {
             LlmFallbackClient(config).convertRawTextToStory(trimmedText)
           }
         }.onSuccess { story ->
-          val project = CreatorProject(
-            id = UUID.randomUUID().toString(),
-            name = trimmedName,
-            rawStoryText = trimmedText,
-            parseMode = ParseMode.LLM_FALLBACK,
-            story = story,
-            completeness = computeCompleteness(story, emptyList()),
-          )
-          repo.save(project)
           _uiState.update {
             it.copy(
               isBusy = false,
-              selectedProject = project,
-              statusMessage = "Project created using LLM conversion.",
+              creationStep = CreationStep.ReviewLlmResult(
+                rawText = trimmedText,
+                story = story,
+                name = finalName,
+                config = config
+              ),
             )
           }
         }.onFailure { err ->
           _uiState.update {
             it.copy(
               isBusy = false,
+              creationStep = CreationStep.Idle,
               statusMessage = "LLM conversion failed: ${err.message}. Project was not created.",
             )
           }
@@ -139,6 +162,42 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
       }
     }
+  }
+
+  fun confirmLlmResult(rawText: String, story: StoryDefinition, name: String, editedStory: StoryDefinition?) {
+    viewModelScope.launch {
+      val finalStory = editedStory ?: story
+      val project = CreatorProject(
+        id = UUID.randomUUID().toString(),
+        name = name,
+        rawStoryText = rawText,
+        parseMode = ParseMode.LLM_FALLBACK,
+        story = finalStory,
+        completeness = computeCompleteness(finalStory, emptyList()),
+      )
+      repo.save(project)
+      _uiState.update {
+        it.copy(
+          creationStep = CreationStep.Idle,
+          selectedProject = project,
+          statusMessage = "Project created using LLM conversion.",
+        )
+      }
+    }
+  }
+
+  fun cancelCreation() {
+    _uiState.update {
+      it.copy(
+        isBusy = false,
+        creationStep = CreationStep.Idle,
+        statusMessage = "Project creation cancelled.",
+      )
+    }
+  }
+
+  fun clearCreationStep() {
+    _uiState.update { it.copy(creationStep = CreationStep.Idle) }
   }
 
   fun selectProject(project: CreatorProject) {
