@@ -37,6 +37,43 @@
   height: 10px;
 }
 
+.story-library__create {
+  margin-top: 1.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.story-library__create h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.story-library__create p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.story-library__create-btn {
+  margin-top: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: rgba(78, 205, 196, 0.2);
+  border: 1px solid rgba(78, 205, 196, 0.4);
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+
+.story-library__create-btn:hover {
+  background: rgba(78, 205, 196, 0.3);
+}
+
 .story-library__status {
   margin-top: 0.5rem;
   color: rgba(255, 255, 255, 0.8);

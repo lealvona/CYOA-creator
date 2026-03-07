@@ -1,0 +1,200 @@
+.markdown-story-creator {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: var(--color-surface);
+  border-radius: 8px;
+}
+
+.markdown-story-creator__header {
+  margin-bottom: 2rem;
+}
+
+.markdown-story-creator__header h2 {
+  margin: 0 0 0.5rem 0;
+  color: var(--color-text);
+}
+
+.markdown-story-creator__description {
+  color: var(--color-text-secondary);
+  margin-bottom: 1rem;
+}
+
+.markdown-story-creator__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.markdown-story-creator__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.markdown-story-creator__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.markdown-story-creator__field label {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.markdown-story-creator__field input,
+.markdown-story-creator__field textarea {
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 1rem;
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+.markdown-story-creator__field textarea {
+  font-family: monospace;
+  resize: vertical;
+  min-height: 400px;
+  line-height: 1.6;
+}
+
+.markdown-story-creator__field input:focus,
+.markdown-story-creator__field textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.markdown-story-creator__errors {
+  padding: 1rem;
+  background: var(--color-error-bg, #fee2e2);
+  border: 1px solid var(--color-error-border, #ef4444);
+  border-radius: 4px;
+}
+
+.markdown-story-creator__errors h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--color-error, #dc2626);
+}
+
+.markdown-story-creator__errors ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.markdown-story-creator__errors li {
+  color: var(--color-error, #dc2626);
+}
+
+.markdown-story-creator__preview {
+  padding: 1.5rem;
+  background: var(--color-success-bg, #f0fdf4);
+  border: 1px solid var(--color-success-border, #22c55e);
+  border-radius: 4px;
+}
+
+.markdown-story-creator__preview h4,
+.markdown-story-creator__preview h5 {
+  margin: 0 0 1rem 0;
+  color: var(--color-text);
+}
+
+.markdown-story-creator__preview h5 {
+  margin-top: 1.5rem;
+}
+
+.markdown-story-creator__preview dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem 1rem;
+  margin: 0;
+}
+
+.markdown-story-creator__preview dt {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.markdown-story-creator__preview dd {
+  margin: 0;
+  color: var(--color-text);
+}
+
+.markdown-story-creator__preview ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.markdown-story-creator__preview li {
+  color: var(--color-text);
+  margin-bottom: 0.25rem;
+}
+
+.markdown-story-creator__footer {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.markdown-story-creator__syntax-help {
+  margin-bottom: 1.5rem;
+}
+
+.markdown-story-creator__syntax-help strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
+}
+
+.markdown-story-creator__syntax-help pre {
+  padding: 1rem;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.markdown-story-creator__buttons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.markdown-story-creator__btn-primary,
+.markdown-story-creator__btn-secondary {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.markdown-story-creator__btn-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.markdown-story-creator__btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.markdown-story-creator__btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.markdown-story-creator__btn-secondary {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.markdown-story-creator__btn-secondary:hover {
+  background: var(--color-background);
+}
